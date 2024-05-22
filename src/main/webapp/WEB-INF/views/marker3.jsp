@@ -106,6 +106,14 @@
 	width: 900px;
 	height: 350px;
 }
+/* table {
+table-layout : fixed } */
+td
+{
+ max-width: 0;
+/* white-space: pre-line; */
+white-space: pre-wrap;
+/* word-wrap: break-word; */}
 /* 로딩창 */
 .mask {
 	position: fixed;
@@ -126,14 +134,46 @@
 	height: 50px;
 }
 </style>
-
+ <style>
+    #loading-indicator {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+    }
+    #loading-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        color: #333;
+    }
+</style>
 </head>
 <body>
-	<!-- 로딩 화면 -->
-	<div class="mask">
+  <div id="loading-indicator">
+    <div id="loading-text">로딩 중...</div>
+</div>
+
+<!-- 여기에 페이지 내용을 추가 -->
+
+<script>
+    // 페이지 로드 후 로딩 표시 숨기기
+    window.addEventListener('load', function() {
+        document.getElementById('loading-indicator').style.display = 'none';
+    });
+</script>
+ 	<!-- 로딩 화면 -->
+<!-- 	<div class="mask">
 		<img class="loadingImg" src='https://i.ibb.co/20zw80q/1487.gif'>
 	</div>
 	<script>
+
 		const mask = document.querySelector('.mask');
 		const html = document.querySelector('html');
 
@@ -145,7 +185,7 @@
 			mask.style.display = 'none';
 
 		})
-	</script>
+	</script>  --> 
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark"
 		aria-label="Ninth navbar example">
 		<div class="container-xl">

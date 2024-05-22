@@ -387,7 +387,13 @@ public class TransCoord {
 	    } else if ("acc_info".equals(nodeName)) {
 	        accInfoDto.setAcc_info(nodeValue);
 	    } else if ("acc_road_code".equals(nodeName)) {
-	        accInfoDto.setAcc_road_code(nodeValue);
+	    	String convertedRoadCode = null;
+	    	if(nodeValue.equals("009")) {
+	    		convertedRoadCode = "전체통제";
+	    	}else {
+	    		convertedRoadCode = "부분통제";
+	    	}
+	        accInfoDto.setAcc_road_code(convertedRoadCode);
 	    }
 	}
 }

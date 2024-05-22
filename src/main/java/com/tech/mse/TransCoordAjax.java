@@ -31,6 +31,9 @@ import org.xml.sax.SAXException;
 
 import com.google.gson.Gson;
 import com.tech.mse.dto.AccInfoDto;
+import com.tech.mse.forenum.AccMainCodeE;
+import com.tech.mse.forenum.AccSubCodeE;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -187,30 +190,42 @@ public class TransCoordAjax {
 
 	}
 	private static void setAccInfoDtoField(AccInfoDto accInfoDto, String nodeName, String nodeValue) {
-	    if ("acc_id".equals(nodeName)) {
-	        accInfoDto.setAcc_id(nodeValue);
-	    } else if ("occr_date".equals(nodeName)) {
-	        accInfoDto.setOccr_date(nodeValue);
-	    } else if ("occr_time".equals(nodeName)) {
-	        accInfoDto.setOccr_time(nodeValue);
-	    } else if ("exp_clr_date".equals(nodeName)) {
-	        accInfoDto.setExp_clr_date(nodeValue);
-	    } else if ("exp_clr_time".equals(nodeName)) {
-	        accInfoDto.setExp_clr_time(nodeValue);
-	    } else if ("acc_type".equals(nodeName)) {
-	        accInfoDto.setAcc_type(nodeValue);
-	    } else if ("acc_dtype".equals(nodeName)) {
-	        accInfoDto.setAcc_dtype(nodeValue);
-	    } else if ("link_id".equals(nodeName)) {
-	        accInfoDto.setLink_id(nodeValue);
-	    } else if ("grs80tm_x".equals(nodeName)) {
-	        accInfoDto.setGrs80tm_x(nodeValue);
-	    } else if ("grs80tm_y".equals(nodeName)) {
-	        accInfoDto.setGrs80tm_y(nodeValue);
-	    } else if ("acc_info".equals(nodeName)) {
-	        accInfoDto.setAcc_info(nodeValue);
-	    } else if ("acc_road_code".equals(nodeName)) {
-	        accInfoDto.setAcc_road_code(nodeValue);
-	    }
-	}
+		 if ("acc_id".equals(nodeName)) {
+		        accInfoDto.setAcc_id(nodeValue);
+		    } else if ("occr_date".equals(nodeName)) {
+		        accInfoDto.setOccr_date(nodeValue);
+		    } else if ("occr_time".equals(nodeName)) {
+		        accInfoDto.setOccr_time(nodeValue);
+		    } else if ("exp_clr_date".equals(nodeName)) {
+		        accInfoDto.setExp_clr_date(nodeValue);
+		    } else if ("exp_clr_time".equals(nodeName)) {
+		        accInfoDto.setExp_clr_time(nodeValue);
+		    } else if ("acc_type".equals(nodeName)) {
+		    	//accmain 한글값
+	            String fromMain = AccMainCodeE.fromCode(nodeValue).getDescription();
+	            System.out.println("이넘에서 가져온 name : " + fromMain);
+		        accInfoDto.setAcc_type(fromMain);
+		    } else if ("acc_dtype".equals(nodeName)) {
+		    	//accsub 한글값
+	            String fromSub = AccSubCodeE.fromCode(nodeValue).getDescription();
+	            System.out.println("이넘에서 가져온 fromSub : " + fromSub);
+		        accInfoDto.setAcc_dtype(fromSub);
+		    } else if ("link_id".equals(nodeName)) {
+		        accInfoDto.setLink_id(nodeValue);
+		    } else if ("grs80tm_x".equals(nodeName)) {
+		        accInfoDto.setGrs80tm_x(nodeValue);
+		    } else if ("grs80tm_y".equals(nodeName)) {
+		        accInfoDto.setGrs80tm_y(nodeValue);
+		    } else if ("acc_info".equals(nodeName)) {
+		        accInfoDto.setAcc_info(nodeValue);
+		    } else if ("acc_road_code".equals(nodeName)) {
+		    	String convertedRoadCode = null;
+		    	if(nodeValue.equals("009")) {
+		    		convertedRoadCode = "전체통제";
+		    	}else {
+		    		convertedRoadCode = "부분통제";
+		    	}
+		        accInfoDto.setAcc_road_code(convertedRoadCode);
+		    }
+		}
 }

@@ -30,6 +30,30 @@
 	width: 50px;
 	height: 50px;
 }
+/*overlay css  */
+#containerWrapper {
+	position: relative;
+	width: 900px;
+	height: 350px;
+	padding: 15px 10px;
+}
+
+#containerWrapper th[scope="row"] {
+	width: 100px;
+}
+
+#poptable {
+	width: 900px;
+	height: 350px;
+}
+/* table {
+table-layout : fixed } */
+td
+{
+ max-width: 0;
+white-space: pre-line;
+
+/* word-wrap: break-word; */}
 </style>
 
 </head>
@@ -78,49 +102,247 @@
 		</div>
 		<div id="map" style="width: 100%; height: 37.5rem;"></div>
 	</div>
-
+<script
+		src="//dapi.kakao.com/v2/maps/sdk.js?appkey=95a120f4136142a682c524ab0736667c"></script>
 	<script>
+	// 로딩화면 위한 변수
 		const mask = document.querySelector('.mask');
 		const html = document.querySelector('html');
-
 		html.style.overflow = 'hidden'; // 로딩 중 스크롤 방지
-/* 
-		$.ajax({
-			type : "GET",
-			url : "accInfoAjax",
-			success : function(data) {
-				// 데이터를 받아와서 사용
-				console.log(data);
-
-				// 예시: JSON 데이터를 파싱하여 배열로 변환
-				var accDtoList = JSON.parse(data);
-
-				accDtoList.forEach(function(accDto) {
-					console.log(accDto.occr_date);
-					console.log(accDto.occr_time);
-					// 여기서부터는 원하는 대로 데이터 활용
+		
+		
+	// promise이용한 ajax통신	
+		function getAccInfoAjax() {
+		    return new Promise(function(resolve, reject) {
+		        $.ajax({
+		            method: "GET",
+		            url: "accInfoAjax",
+		            dataType: "json", // 'json'이 맞는 표현입니다.
+		        })
+		        .done((data) => {
+		            console.log("데이터가 있나요? : " + data);
+		            resolve(data); // 데이터가 성공적으로 도착했을 때 resolve 호출
+		        })
+		        .fail((error) => {
+		            console.error("AJAX 요청 실패:", error);
+		            reject(null); // 요청이 실패했을 때 reject 호출
+		        })
+		        .always(() => {
+		            mask.style.opacity = '0';
+		            setTimeout(function() {
+		                mask.style.display = 'none';
+		                html.style.overflow = 'auto';
+		            }, 500);
+		        });
+		    });
+		}
+		
+  // 출력형식에 맞게 time형식 고치기
+ function resolveDateTime(accdate, acctime){
+	var occr_date = accdate; // 예: '20240516'
+	var occr_time = acctime; // 예: '164700'
+	
+	//시작날짜와 시간을 나눠서 가져오기
+	var year = occr_date.substring(0, 4);
+	var month = occr_date.substring(4, 6);
+	var day = occr_date.substring(6, 8);
+	var hour = occr_time.substring(0, 2);
+	var minute = occr_time.substring(2, 4);
+	
+	var resolvedTime = year + '-' + month + '-' + day + ' ' + hour + ':'
+	+ minute;
+	
+	return resolvedTime;
+ }
+  
+//kakao 지도 생성 시작
+	var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+	mapOption = {
+		center : new kakao.maps.LatLng(37.561403970095625,
+				127.03547621232234), // 지도의 중심좌표
+		level : 4, // 지도의 확대 레벨
+		mapTypeId : kakao.maps.MapTypeId.ROADMAP // 지도종류
+	};
+  
+	// 지도를 생성한다 
+	var map = new kakao.maps.Map(mapContainer, mapOption);
+	// 실시간교통 타일 이미지 추가
+	map.addOverlayMapTypeId(kakao.maps.MapTypeId.TRAFFIC);
+  
+	
+	
+ 	async function getdata(){
+			let accDtoList = await getAccInfoAjax();
+			let positions = [];
+			for(const [i,dto] of accDtoList.entries()){
+				let startTime = resolveDateTime(dto.occr_date,dto.occr_time);
+				let endTime = resolveDateTime(dto.exp_clr_date,dto.exp_clr_time);
+				positions.push({
+					title : dto.acc_info,
+					acc_type : dto.acc_type,
+					acc_dtype : dto.acc_dtype,
+					startTime : startTime,
+					endTime : endTime,
+					lat : dto.grs80tm_y,
+					lng : dto.grs80tm_x
 				});
-
-				// 데이터 로드 완료 후 로딩 화면 제거
-				mask.style.opacity = '0'; // 서서히 사라지는 효과
-				setTimeout(function() {
-					mask.style.display = 'none';
-					html.style.overflow = 'auto'; // 스크롤 방지 해제
-				}, 500); // transition과 동일한 시간으로 설정
-			},
-			error : function(jqXHR, textStatus, errorThrown) {
-				console.error("Error:", textStatus, errorThrown);
-				// 에러 발생 시에도 로딩 화면 제거
-				mask.style.opacity = '0';
-				setTimeout(function() {
-					mask.style.display = 'none';
-					html.style.overflow = 'auto';
-				}, 500);
+				displayMarker(positions[i]);
 			}
-		}); */
+			console.log(positions);
+		};
+		
+		//overlay 기본셋
+		var overlay = new kakao.maps.CustomOverlay({
+			xAnchor : 0.5,
+			yAnchor : 1,
+			zIndex : 3
+		});
+		
+		//지도에 마커를 표시하는 함수입니다    
+		function displayMarker(data) {
+			var marker = new kakao.maps.Marker({
+				map : map,
+				position : new kakao.maps.LatLng(data.lat,data.lng),
+				title : data.title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+			});
+			//-------
+			// 컨테이너 div 생성 및 클래스 추가
+			var container = document.createElement('div');
+			container.id = 'containerWrapper';
+			// 테이블 생성 및 클래스 추가
+			var table = document.createElement('table');
+			table.className = 'table';
+			table.id = 'poptable';
+
+			// 테이블 헤드 생성
+			var thead = document.createElement('thead');
+
+			// 테이블 헤드의 행 생성
+			var trHead = document.createElement('tr');
+
+			// 첫 번째 헤드 셀 생성 및 설정
+			var thHead = document.createElement('th');
+			thHead.colSpan = 2;
+			thHead.scope = 'col';
+			thHead.style.position = 'relative';
+			thHead.textContent = '[ 덕수궁길 - 집회및행사 ]';
+
+			// "Close" 버튼 생성 및 설정
+			var closeButton = document.createElement('button');
+			closeButton.type = 'button';
+			closeButton.id = 'popclose';
+			closeButton.className = 'btn btn-outline-secondary btn-sm';
+			closeButton.style.position = 'absolute';
+			closeButton.style.top = '5px';
+			closeButton.style.right = '10px';
+			closeButton.textContent = 'Close';
+
+			// "Close" 버튼을 thHead에 추가
+			thHead.appendChild(closeButton);
+
+			// thHead를 trHead에 추가
+			trHead.appendChild(thHead);
+			thead.appendChild(trHead);
+			table.appendChild(thead);
+
+			// 테이블 바디 생성 및 클래스 추가
+			var tbody = document.createElement('tbody');
+			tbody.className = 'table-group-divider';
+
+			// 첫 번째 데이터 행 생성
+			var tr1 = document.createElement('tr');
+			var th1 = document.createElement('th');
+			th1.scope = 'row';
+			th1.textContent = '기간';
+			tr1.appendChild(th1);
+			var td1 = document.createElement('td');
+			td1.textContent = data.startTime + ` ~ ` + data.endTime;
+			tr1.appendChild(td1);
+			tbody.appendChild(tr1);
+
+			// 두 번째 데이터 행 생성
+			var tr2 = document.createElement('tr');
+			var th2 = document.createElement('th');
+			th2.scope = 'row';
+			th2.textContent = '돌발유형';
+			tr2.appendChild(th2);
+			var td2 = document.createElement('td');
+			td2.textContent = data.acc_type +'('+ data.acc_dtype+')';
+			tr2.appendChild(td2);
+			tbody.appendChild(tr2);
+
+			// 세 번째 데이터 행 생성
+			var tr3 = document.createElement('tr');
+			var th3 = document.createElement('th');
+			th3.scope = 'row';
+			th3.textContent = '도로';
+			tr3.appendChild(th3);
+			var td3 = document.createElement('td');
+			td3.textContent = '[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회';
+			tr3.appendChild(td3);
+			tbody.appendChild(tr3);
+
+			// 네 번째 데이터 행 생성
+			var tr4 = document.createElement('tr');
+			var th4 = document.createElement('th');
+			th4.scope = 'row';
+			th4.textContent = '통제여부';
+			tr4.appendChild(th4);
+			var td4 = document.createElement('td');
+			td4.textContent = '전체 통제';
+			tr4.appendChild(td4);
+			tbody.appendChild(tr4);
+
+			// 다섯 번째 데이터 행 생성 (colspan이 2인 셀)
+			var tr5 = document.createElement('tr');
+			var td5 = document.createElement('td');
+			td5.colSpan = 2;
+			td5.textContent = data.title;
+			tr5.appendChild(td5);
+			tbody.appendChild(tr5);
+
+			// 테이블에 tbody 추가
+			table.appendChild(tbody);
+
+			// 컨테이너에 테이블 추가
+			container.appendChild(table);
+			/* //문서의 body에 컨테이너 추가 (또는 원하는 다른 위치에 추가)
+			 document.body.appendChild(container); */
+			// "Close" 버튼 클릭 이벤트 리스너 추가
+			closeButton.addEventListener('click', function() {
+				overlay.setMap(null);
+			});
+
+			//-------
+			var content = document.createElement('div');
+			//컨테이너의 가로폭과 세로높이 설정
+			/*
+			 content.innerHTML =  data.title;
+			 content.style.cssText = 'background: white; border: 1px solid black'; */
+
+			var closeBtn = document.createElement('button');
+			closeBtn.innerHTML = '닫기';
+			closeBtn.onclick = function() {
+				overlay.setMap(null);
+			};
+
+			/*  content.appendChild(closeBtn); */
+			content.appendChild(container);
+
+			kakao.maps.event.addListener(marker, 'click', function() {
+				alert("클릭");
+				overlay.setContent(content);
+				overlay.setPosition(new kakao.maps.LatLng(data.lat,data.lng));
+				overlay.setMap(map);
+				/*      document.body.appendChild(container); */
+				console.log(overlay);
+			});
+			console.log(container);
+		}
+		getdata();
 	</script>
 <script>
-const accInfoAjax = () => {
+/* const accInfoAjax = () => {
     return new Promise((resolve, reject) => {
         $.ajax({
             type: "GET",
@@ -173,11 +395,11 @@ const accInfoAjax = () => {
             //주소 좌표와 생성한 지도 객체를 배열에 담아줍니다.
             position.push(coords);
             maps.push(map);
-        }
+        
     } catch(e) {
         console.error(e);
     }
-})();
+})(); */
 </script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
@@ -94,7 +95,7 @@ public class HomeController {
 		
 		return "marker3";
 	}
-	@RequestMapping(value = "/accInfoAjax", method = RequestMethod.GET)
+	@RequestMapping(value = "/accInfoAjax", method = RequestMethod.GET, produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public String accInfoAjax(Model model) {
 		
@@ -108,6 +109,7 @@ public class HomeController {
 			TransCoordAjax tca = new TransCoordAjax();
 			accDtoListJSON = tca.accDTOListToJson(accDtoList);
 			System.out.println("---------ajax 실행");
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -121,6 +123,8 @@ public class HomeController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		
 		
 		return accDtoListJSON;
 	}
