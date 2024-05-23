@@ -22,6 +22,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.xml.sax.SAXException;
 
+import com.tech.mse.api.AccMainCode;
+import com.tech.mse.api.AccSubCode;
+import com.tech.mse.api.RegCode;
+import com.tech.mse.api.TransCoord;
+import com.tech.mse.api.TransCoordAjax;
 import com.tech.mse.dto.AccInfoDto;
 import com.tech.mse.dto.RedCodeNameDto;
 

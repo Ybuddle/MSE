@@ -5,7 +5,7 @@ import java.util.Map;
 
 import lombok.AllArgsConstructor;
 
-public enum Reg_code {
+public enum RegCodeE {
 	 JONGNO(100, "종로구"),
 	    JUNG(101, "중구"),
 	    YONGSAN(102, "용산구"),
@@ -35,7 +35,7 @@ public enum Reg_code {
 	    private final int code;
 	    private final String name;
 
-	    Reg_code(int code, String name) {
+	    RegCodeE(int code, String name) {
 	        this.code = code;
 	        this.name = name;
 	    }
@@ -57,15 +57,15 @@ public enum Reg_code {
 		 * Reg_code.values()) { if (district.getName().equals(name)) { return district;
 		 * } } throw new IllegalArgumentException("Invalid district name: " + name); }
 		 */
-	    public static Reg_code fromCode(int code) {
-	        return Arrays.stream(Reg_code.values())
+	    public static RegCodeE fromCode(int code) {
+	        return Arrays.stream(RegCodeE.values())
 	                .filter(regCode -> regCode.getCode() == code)
 	                .findFirst()
 	                .orElseThrow(() -> new IllegalArgumentException("Invalid district code: " + code));
 	    }
 
-	    public static Reg_code fromName(String name) {
-	        return Arrays.stream(Reg_code.values())
+	    public static RegCodeE fromName(String name) {
+	        return Arrays.stream(RegCodeE.values())
 	                .filter(regCode -> regCode.getName().equals(name))
 	                .findFirst()
 	                .orElseThrow(() -> new IllegalArgumentException("Invalid district name: " + name));

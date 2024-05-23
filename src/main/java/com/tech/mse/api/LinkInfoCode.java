@@ -1,4 +1,4 @@
-package com.tech.mse;
+package com.tech.mse.api;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 import com.tech.mse.dao.CodeDao;
 import com.tech.mse.dto.RedCodeNameDto;
 
-public class AccMainCode {
+public class LinkInfoCode {
 	static String accURL = "http://openapi.seoul.go.kr:8088";
 	static String seoulKey = "546f564c636b7962313131574a784546";
 	static String accURLwithKeyXML = "http://openapi.seoul.go.kr:8088/"+seoulKey+"/xml";
@@ -47,16 +47,17 @@ public class AccMainCode {
 	static String restKey = "8044e14fa2240bb8b13af47f524ae9aa";
 	static String auth = "KakaoAK " + restKey;
 
-	public static StringBuilder getURLAcc(String start, String end) throws IOException {
-		//	서울시 돌발 유형 코드 정보
-		//http://openapi.seoul.go.kr:8088/(인증키)/xml/AccMainCode/1/5/
+	public static StringBuilder getURLAcc(String linkId) throws IOException {
+//		서울시 소통 돌발 링크(1220003800) 정보
+//		http://openapi.seoul.go.kr:8088/(인증키)/xml/LinkInfo/1/5/1220003800/
 		StringBuilder urlBuilder = new StringBuilder(accURLwithKeyXML);
 		// api 호출 내용 AccInfo
-		urlBuilder.append("/" + URLEncoder.encode("AccMainCode", "UTF-8"));
+		urlBuilder.append("/" + URLEncoder.encode("LinkInfo", "UTF-8"));
 		// 페이징 시작번호
-		urlBuilder.append("/" + URLEncoder.encode(start, "UTF-8"));
+		urlBuilder.append("/" + URLEncoder.encode("1", "UTF-8"));
 		// 페이징 끝번호
-		urlBuilder.append("/" + URLEncoder.encode(end, "UTF-8"));
+		urlBuilder.append("/" + URLEncoder.encode("2", "UTF-8"));
+		urlBuilder.append("/" + URLEncoder.encode(linkId, "UTF-8"));
 
 		return urlBuilder;
 	}
@@ -123,9 +124,9 @@ public class AccMainCode {
 	}
 	public static void main(String[] args) {
 		StringBuilder urlbuilder = null;
-		AccMainCode tc = new AccMainCode();
+		LinkInfoCode tc = new LinkInfoCode();
 		try {
-			urlbuilder = getURLAcc("1","50");
+			urlbuilder = getURLAcc("1130020500");
 			System.out.println("URL : "+ urlbuilder.toString());
 //			List<RedCodeNameDto> rDtolist = tc.useOnlyDocSeoul(urlbuilder);
 			tc.useOnlyDocSeoul(urlbuilder);
@@ -178,7 +179,7 @@ public List<Map<String, String>> useOnlyDocSeoul(StringBuilder urlbuilder) throw
 		System.out.println("총데이터갯수"+totcountNode.item(0).getTextContent());
 
 		System.out.println("파싱할 리스트 수 : "+ nList.getLength()); 
-		System.out.println(((NodeList) nList.item(0)).getLength());
+		System.out.println("row한 개에 들어있는 정보 갯수" + ((NodeList) nList.item(0)).getLength());
 		
 
 		List<Map<String, String>> accMainList = new ArrayList<>();

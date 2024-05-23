@@ -46,14 +46,33 @@
 	width: 900px;
 	height: 350px;
 }
-/* table {
-table-layout : fixed } */
-td
-{
- max-width: 0;
-white-space: pre-line;
 
-/* word-wrap: break-word; */}
+table {
+	/* table-layout : fixed */
+	
+}
+
+#poptable td {
+ 	max-width: 0;
+	white-space: pre-wrap;
+
+	/* word-wrap: break-word; */
+}
+/*accList 테이블  */
+#accList{
+width:100%; 
+height:250px; 
+overflow:auto;
+}
+#accList table{
+}
+#accList thead{
+position : sticky; 
+top: 0; 
+}
+.add-time-td {
+	width: 180px;
+}
 </style>
 
 </head>
@@ -62,7 +81,7 @@ white-space: pre-line;
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark"
 		aria-label="Ninth navbar example">
 		<div class="container-xl">
-			<a class="navbar-brand" href="#">Container XL</a>
+			<a class="navbar-brand" href="#">My SeoulEvent</a>
 			<button class="navbar-toggler" type="button"
 				data-bs-toggle="collapse" data-bs-target="#navbarsExample07XL"
 				aria-controls="navbarsExample07XL" aria-expanded="false"
@@ -87,22 +106,66 @@ white-space: pre-line;
 									here</a></li>
 						</ul></li>
 				</ul>
-				<form role="search">
-					<input class="form-control" type="search" placeholder="Search"
-						aria-label="Search">
-				</form>
 			</div>
 		</div>
 	</nav>
 
-	<div class="container-xl mb-4" id="accList">
+	<div class="container-xl mb-4">
 		<!-- 로딩 화면 -->
 		<div class="mask">
 			<img class="loadingImg" src='https://i.ibb.co/20zw80q/1487.gif'>
-		</div>
+		</div> 
+
+		<!--kakaomap  -->
 		<div id="map" style="width: 100%; height: 37.5rem;"></div>
+
+		<!--탭바  -->
+		<ul class="nav nav-tabs" role="tablist">
+			<li class="nav-item" role="presentation"><a
+				class="nav-link active" data-bs-toggle="tab" href="#accContainer"
+				aria-selected="true" role="tab">사고 및 통제 <span class="badge bg-primary">0건</span>
+				</a></li>
+			<li class="nav-item" role="presentation"><a class="nav-link"
+				data-bs-toggle="tab" href="#profile" aria-selected="false"
+				tabindex="-1" role="tab">Profile</a></li>
+			<li class="nav-item" role="presentation"><a
+				class="nav-link disabled" href="#" aria-selected="false"
+				tabindex="-1" role="tab">Disabled</a></li>
+		</ul>
+
+		<div id="myTabContent" class="tab-content">
+			<!--첫번째탭 accContainer-->
+			<div class="tab-pane fade show active" id="accContainer"
+				role="tabpanel">
+				<!-- 돌발 리스트 -->
+				<div id="accList">
+					<table class="table table-hover">
+				<colgroup>
+            <col class="col-md-10">
+            <col class="col-md-2">
+        </colgroup>
+						<thead>
+							<tr>
+								<th scope="col">발생내용</th>
+								<th class="acc-time-td" scope="col">발생 및 완료예정일</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- <tr>
+								<td>Column content</td>
+								<td class="add-time-td"><div>2024-05-16 11:00</div>
+									<div>2024-05-16 14:00</div></td>
+							</tr> -->
+						</tbody>
+					</table>
+				</div>
+				<!--첫번째탭accContainer 끝-->
+			</div>
+
+		</div>
 	</div>
-<script
+	<!--content container div 끝 -->
+	<script
 		src="//dapi.kakao.com/v2/maps/sdk.js?appkey=95a120f4136142a682c524ab0736667c"></script>
 	<script>
 	// 로딩화면 위한 변수
@@ -117,7 +180,7 @@ white-space: pre-line;
 		        $.ajax({
 		            method: "GET",
 		            url: "accInfoAjax",
-		            dataType: "json", // 'json'이 맞는 표현입니다.
+		            dataType: "json",
 		        })
 		        .done((data) => {
 		            console.log("데이터가 있나요? : " + data);
@@ -169,11 +232,20 @@ white-space: pre-line;
 	// 실시간교통 타일 이미지 추가
 	map.addOverlayMapTypeId(kakao.maps.MapTypeId.TRAFFIC);
   
-	
-	
+	// 지도를 재설정할 범위정보를 가지고 있을 LatLngBounds 객체를 생성합니다
+	var bounds = new kakao.maps.LatLngBounds();    
+	function setBounds() {
+	    // LatLngBounds 객체에 추가된 좌표들을 기준으로 지도의 범위를 재설정합니다
+	    // 이때 지도의 중심좌표와 레벨이 변경될 수 있습니다
+	    map.setBounds(bounds);
+	}
  	async function getdata(){
 			let accDtoList = await getAccInfoAjax();
+			//dto 마다 정제된 변수들 list
 			let positions = [];
+			//탭바에 총 갯수 추가
+			addTotalAccList(accDtoList);
+			
 			for(const [i,dto] of accDtoList.entries()){
 				let startTime = resolveDateTime(dto.occr_date,dto.occr_time);
 				let endTime = resolveDateTime(dto.exp_clr_date,dto.exp_clr_time);
@@ -184,11 +256,23 @@ white-space: pre-line;
 					startTime : startTime,
 					endTime : endTime,
 					lat : dto.grs80tm_y,
-					lng : dto.grs80tm_x
+					lng : dto.grs80tm_x,
+					acc_road_code : dto.acc_road_code
 				});
-				displayMarker(positions[i]);
+				
+				//dto 마다 기본 marker생성
+				var marker = displayMarker(positions[i]);
+				//해당 marker의 오버레이와 오버레이 띄우는 클릭이벤트
+				var content = getMakerOverlayContents(marker,positions[i]);
+				
+			    // LatLngBounds 객체에 좌표를 추가
+			    bounds.extend(marker.getPosition());
+				//리스트 생성(marker,인포 윈도우 컨텐츠)+클릭이벤트
+				addAccList(positions[i],marker,content);
 			}
 			console.log(positions);
+		    //영역 재설정
+		    setBounds();
 		};
 		
 		//overlay 기본셋
@@ -197,151 +281,117 @@ white-space: pre-line;
 			yAnchor : 1,
 			zIndex : 3
 		});
-		
-		//지도에 마커를 표시하는 함수입니다    
-		function displayMarker(data) {
-			var marker = new kakao.maps.Marker({
-				map : map,
-				position : new kakao.maps.LatLng(data.lat,data.lng),
-				title : data.title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
-			});
-			//-------
-			// 컨테이너 div 생성 및 클래스 추가
-			var container = document.createElement('div');
-			container.id = 'containerWrapper';
-			// 테이블 생성 및 클래스 추가
-			var table = document.createElement('table');
-			table.className = 'table';
-			table.id = 'poptable';
-
-			// 테이블 헤드 생성
-			var thead = document.createElement('thead');
-
-			// 테이블 헤드의 행 생성
-			var trHead = document.createElement('tr');
-
-			// 첫 번째 헤드 셀 생성 및 설정
-			var thHead = document.createElement('th');
-			thHead.colSpan = 2;
-			thHead.scope = 'col';
-			thHead.style.position = 'relative';
-			thHead.textContent = '[ 덕수궁길 - 집회및행사 ]';
-
-			// "Close" 버튼 생성 및 설정
-			var closeButton = document.createElement('button');
-			closeButton.type = 'button';
-			closeButton.id = 'popclose';
-			closeButton.className = 'btn btn-outline-secondary btn-sm';
-			closeButton.style.position = 'absolute';
-			closeButton.style.top = '5px';
-			closeButton.style.right = '10px';
-			closeButton.textContent = 'Close';
-
-			// "Close" 버튼을 thHead에 추가
-			thHead.appendChild(closeButton);
-
-			// thHead를 trHead에 추가
-			trHead.appendChild(thHead);
-			thead.appendChild(trHead);
-			table.appendChild(thead);
-
-			// 테이블 바디 생성 및 클래스 추가
-			var tbody = document.createElement('tbody');
-			tbody.className = 'table-group-divider';
-
-			// 첫 번째 데이터 행 생성
-			var tr1 = document.createElement('tr');
-			var th1 = document.createElement('th');
-			th1.scope = 'row';
-			th1.textContent = '기간';
-			tr1.appendChild(th1);
-			var td1 = document.createElement('td');
-			td1.textContent = data.startTime + ` ~ ` + data.endTime;
-			tr1.appendChild(td1);
-			tbody.appendChild(tr1);
-
-			// 두 번째 데이터 행 생성
-			var tr2 = document.createElement('tr');
-			var th2 = document.createElement('th');
-			th2.scope = 'row';
-			th2.textContent = '돌발유형';
-			tr2.appendChild(th2);
-			var td2 = document.createElement('td');
-			td2.textContent = data.acc_type +'('+ data.acc_dtype+')';
-			tr2.appendChild(td2);
-			tbody.appendChild(tr2);
-
-			// 세 번째 데이터 행 생성
-			var tr3 = document.createElement('tr');
-			var th3 = document.createElement('th');
-			th3.scope = 'row';
-			th3.textContent = '도로';
-			tr3.appendChild(th3);
-			var td3 = document.createElement('td');
-			td3.textContent = '[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회[덕수궁길]덕수궁->정동제일교회';
-			tr3.appendChild(td3);
-			tbody.appendChild(tr3);
-
-			// 네 번째 데이터 행 생성
-			var tr4 = document.createElement('tr');
-			var th4 = document.createElement('th');
-			th4.scope = 'row';
-			th4.textContent = '통제여부';
-			tr4.appendChild(th4);
-			var td4 = document.createElement('td');
-			td4.textContent = '전체 통제';
-			tr4.appendChild(td4);
-			tbody.appendChild(tr4);
-
-			// 다섯 번째 데이터 행 생성 (colspan이 2인 셀)
-			var tr5 = document.createElement('tr');
-			var td5 = document.createElement('td');
-			td5.colSpan = 2;
-			td5.textContent = data.title;
-			tr5.appendChild(td5);
-			tbody.appendChild(tr5);
-
-			// 테이블에 tbody 추가
-			table.appendChild(tbody);
-
-			// 컨테이너에 테이블 추가
-			container.appendChild(table);
-			/* //문서의 body에 컨테이너 추가 (또는 원하는 다른 위치에 추가)
-			 document.body.appendChild(container); */
-			// "Close" 버튼 클릭 이벤트 리스너 추가
-			closeButton.addEventListener('click', function() {
-				overlay.setMap(null);
-			});
-
-			//-------
-			var content = document.createElement('div');
-			//컨테이너의 가로폭과 세로높이 설정
-			/*
-			 content.innerHTML =  data.title;
-			 content.style.cssText = 'background: white; border: 1px solid black'; */
-
-			var closeBtn = document.createElement('button');
-			closeBtn.innerHTML = '닫기';
-			closeBtn.onclick = function() {
-				overlay.setMap(null);
-			};
-
-			/*  content.appendChild(closeBtn); */
-			content.appendChild(container);
-
-			kakao.maps.event.addListener(marker, 'click', function() {
-				alert("클릭");
-				overlay.setContent(content);
-				overlay.setPosition(new kakao.maps.LatLng(data.lat,data.lng));
-				overlay.setMap(map);
-				/*      document.body.appendChild(container); */
-				console.log(overlay);
-			});
-			console.log(container);
+		//accList에 내용을 append 하는 함수
+		function addAccList(data,marker,content){
+			 var newtr = document.createElement('tr');
+			var newRowHTML = `
+                    <td class="acc_info">\${data.title}</td>
+                    <td class="add-time-td">
+                        <div>\${data.startTime}</div>
+                        <div>\${data.endTime}</div>
+                    </td>
+            `;
+            // 새로운 행을 추가하고 tbody를 표시합니다.
+            
+            $(newtr).append(newRowHTML)
+            $('#accList tbody').append(newtr);
+            
+            if(data.acc_road_code=="부분통제"){
+            	let roadCodeSpan = `<span class="badge bg-warning">\${data.acc_road_code}</span>`;
+            	$(newtr).find('.acc_info').append(roadCodeSpan)
+            }else{
+            	let roadCodeSpan = `<span class="badge bg-danger">\${data.acc_road_code}</span>`;
+            	$(newtr).find('.acc_info').append(roadCodeSpan)
+            }
+            //tr 마다 클릭했을때 해당 marker 좌표로 이동
+            $(newtr).click(function() {
+            	map.panTo(marker.getPosition());
+		        overlay.setContent(content);
+		        overlay.setPosition(marker.getPosition());
+		        overlay.setMap(map,marker);
+            });
 		}
+		//accList 탭에 총 갯수 표시
+		function addTotalAccList(accDtoList){
+			let accTotalNum = accDtoList.length + '건';
+			$('.badge.bg-primary').text(accTotalNum);
+		}
+		
+		//마커에 대한 overlay contents 설정 함수
+		function getMakerOverlayContents(marker,data){
+			// HTML 컨텐츠를 백틱을 이용한 문자열 템플릿으로 생성
+		    var contentHTML = `
+		        <div id="containerWrapper">
+		            <table class="table" id="poptable">
+		                <thead>
+		                    <tr>
+		                        <th scope="col" colspan="2" style="position: relative;">
+		                            [ 덕수궁길 - 집회및행사 ]
+		                            <button type="button" id="popclose" class="btn btn-outline-secondary btn-sm" style="position: absolute; top: 5px; right: 10px;">Close</button>
+		                        </th>
+		                    </tr>
+		                </thead>
+		                <tbody class="table-group-divider">
+		                    <tr>
+		                        <th scope="row">기간</th>
+		                        <td>\${data.startTime} ~ \${data.endTime}</td>
+		                    </tr>
+		                    <tr>
+		                        <th scope="row">돌발유형</th>
+		                        <td>\${data.acc_type} (\${data.acc_dtype})</td>
+		                    </tr>
+		                    <tr>
+		                        <th scope="row">도로</th>
+		                        <td>[덕수궁길]덕수궁->정동제일교회</td>
+		                    </tr>
+		                    <tr>
+		                        <th scope="row">통제여부</th>
+		                        <td>\${data.acc_road_code}</td>
+		                    </tr>
+		                    <tr>
+		                        <td colspan="2">\${data.title}</td>
+		                    </tr>
+		                </tbody>
+		            </table>
+		        </div>
+		    `;
+
+		    // content div에 해당 html 넣기
+		    var content = document.createElement('div');
+		    content.innerHTML = contentHTML;
+				
+		    kakao.maps.event.addListener(marker, 'click', function() {
+		        overlay.setContent(content);
+		        overlay.setPosition(new kakao.maps.LatLng(data.lat, data.lng));
+		        overlay.setMap(map,marker);
+		        console.log(overlay);
+		    });
+
+		    console.log(content);
+		    
+		    return content;
+		};
+		
+		// 지도에 마커를 표시하는 함수입니다    
+		function displayMarker(data) {
+			let latlng = new kakao.maps.LatLng(data.lat, data.lng);
+		    var marker = new kakao.maps.Marker({
+		        map: map,
+		        position: latlng,
+		        title: data.title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+		    });
+
+		    
+		    return marker;
+		}
+		//실행
 		getdata();
+    
+		$(document).on("click","#popclose",function() {
+			overlay.setMap(null);
+		});
 	</script>
-<script>
+	<script>
 /* const accInfoAjax = () => {
     return new Promise((resolve, reject) => {
         $.ajax({

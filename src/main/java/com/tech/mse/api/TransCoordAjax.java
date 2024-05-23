@@ -1,4 +1,4 @@
-package com.tech.mse;
+package com.tech.mse.api;
 
 import java.io.IOException;
 import java.io.InputStream;

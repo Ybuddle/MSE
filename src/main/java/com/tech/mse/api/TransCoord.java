@@ -1,4 +1,4 @@
-package com.tech.mse;
+package com.tech.mse.api;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

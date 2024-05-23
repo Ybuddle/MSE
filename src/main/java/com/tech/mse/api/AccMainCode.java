@@ -1,4 +1,4 @@
-package com.tech.mse;
+package com.tech.mse.api;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -13,7 +13,9 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,7 +38,7 @@ import org.xml.sax.SAXException;
 import com.tech.mse.dao.CodeDao;
 import com.tech.mse.dto.RedCodeNameDto;
 
-public class RegCode {
+public class AccMainCode {
 	static String accURL = "http://openapi.seoul.go.kr:8088";
 	static String seoulKey = "546f564c636b7962313131574a784546";
 	static String accURLwithKeyXML = "http://openapi.seoul.go.kr:8088/"+seoulKey+"/xml";
@@ -46,11 +48,11 @@ public class RegCode {
 	static String auth = "KakaoAK " + restKey;
 
 	public static StringBuilder getURLAcc(String start, String end) throws IOException {
-		//서울시 소통 돌발 교통 권역 정보
-		//http://openapi.seoul.go.kr:8088/(인증키)/xml/RegionInfo/1/5/
+		//	서울시 돌발 유형 코드 정보
+		//http://openapi.seoul.go.kr:8088/(인증키)/xml/AccMainCode/1/5/
 		StringBuilder urlBuilder = new StringBuilder(accURLwithKeyXML);
 		// api 호출 내용 AccInfo
-		urlBuilder.append("/" + URLEncoder.encode("RegionInfo", "UTF-8"));
+		urlBuilder.append("/" + URLEncoder.encode("AccMainCode", "UTF-8"));
 		// 페이징 시작번호
 		urlBuilder.append("/" + URLEncoder.encode(start, "UTF-8"));
 		// 페이징 끝번호
@@ -121,11 +123,12 @@ public class RegCode {
 	}
 	public static void main(String[] args) {
 		StringBuilder urlbuilder = null;
-		RegCode tc = new RegCode();
+		AccMainCode tc = new AccMainCode();
 		try {
 			urlbuilder = getURLAcc("1","50");
 			System.out.println("URL : "+ urlbuilder.toString());
-			List<RedCodeNameDto> rDtolist = tc.useOnlyDocSeoul(urlbuilder);
+//			List<RedCodeNameDto> rDtolist = tc.useOnlyDocSeoul(urlbuilder);
+			tc.useOnlyDocSeoul(urlbuilder);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -140,7 +143,7 @@ public class RegCode {
 			e.printStackTrace();
 		}
 	}
-	public List<RedCodeNameDto> useOnlyDocSeoul(StringBuilder urlbuilder) throws SAXException, IOException, ParserConfigurationException, TransformerException {
+public List<Map<String, String>> useOnlyDocSeoul(StringBuilder urlbuilder) throws SAXException, IOException, ParserConfigurationException, TransformerException {
 		
 		URL url = new URL(urlbuilder.toString());
 
@@ -177,29 +180,31 @@ public class RegCode {
 		System.out.println("파싱할 리스트 수 : "+ nList.getLength()); 
 		System.out.println(((NodeList) nList.item(0)).getLength());
 		
-		 List<RedCodeNameDto> regDtoList = new ArrayList<RedCodeNameDto>();
+
+		List<Map<String, String>> accMainList = new ArrayList<>();
+
 
 	        for (int i = 0; i < nList.getLength(); i++) {
 	            Node rowNode = nList.item(i);
 	            if (rowNode.getNodeType() == Node.ELEMENT_NODE) {
-	            	RedCodeNameDto regCodeDto = new RedCodeNameDto();
-
+	            	//row 한개마다 map인스턴스
+	            	Map<String, String> accMain = new HashMap<>();
+	            	//row안의 childNodes 리스트 
 	                NodeList childNodes = rowNode.getChildNodes();
 	                for (int j = 0; j < childNodes.getLength(); j++) {
 	                    Node childNode = childNodes.item(j);
 	                    if (childNode.getNodeType() == Node.ELEMENT_NODE) {
 	                        String nodeName = childNode.getNodeName();
 	                        String nodeValue = childNode.getTextContent();
-	                        // Set corresponding field in AccInfoDto
-	                        setRegCodeDtoField(regCodeDto, nodeName, nodeValue);
+	                        accMain.put(nodeName,nodeValue);
 	                    }
 	                }
-	                // Add AccInfoDto object to the list
-	                regDtoList.add(regCodeDto);
+	                // Add object to the list
+	                accMainList.add(accMain);
 	            }
 	        }
 	        	        
-		System.out.println("dtoList 사이즈"+regDtoList.size());
+		System.out.println("dtoList 사이즈"+accMainList.size());
 		
 		// Document 객체를 문자열로 변환하여 출력
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -212,7 +217,7 @@ public class RegCode {
 		System.out.println("XML Content:\n" + xmlString);
 		
 		
-		return regDtoList;
+		return accMainList;
 
 	}
 	private static void setRegCodeDtoField(RedCodeNameDto accInfoDto, String nodeName, String nodeValue) {
@@ -223,7 +228,7 @@ public class RegCode {
 	    } 
 	}
 	
-	public void insertDB(List<RedCodeNameDto> rDtolist,SqlSession sqlSession) {
+	public void insertDB(List<Map<String, String>> rDtolist,SqlSession sqlSession) {
 		if (sqlSession == null) {
 		    throw new IllegalStateException("sqlSession is null. Failed to autowire sqlSession.");
 		}
@@ -231,12 +236,12 @@ public class RegCode {
 ////		dao.insertmember(rDtolist);
 //		//500개씩 잘라서 넣기
 //		
-		List<RedCodeNameDto> slist=new ArrayList<RedCodeNameDto>();
+		List<Map<String, String>> slist=new ArrayList<Map<String, String>>();
 	      for (int i = 0; i < rDtolist.size(); i++) {
 	         slist.add(rDtolist.get(i));   
 	         System.out.println(i+" : "+(rDtolist.size()-1));
 	         if(i%500==0 || i==rDtolist.size()-1) {
-	            int a = dao.insertReg(slist);         
+	            int a = dao.insertAccMain(slist);         
 	            slist.clear();
 	            System.out.println("인써트 갯수 : "+ a);
 	         }
