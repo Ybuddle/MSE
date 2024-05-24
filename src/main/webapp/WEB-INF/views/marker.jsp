@@ -277,10 +277,11 @@ top: 0;
 		
 		//overlay 기본셋
 		var overlay = new kakao.maps.CustomOverlay({
-			xAnchor : 0.5,
-			yAnchor : 1,
+			xAnchor : 0,
+			yAnchor : 0.5,
 			zIndex : 3
 		});
+		
 		//accList에 내용을 append 하는 함수
 		function addAccList(data,marker,content){
 			 var newtr = document.createElement('tr');
@@ -455,5 +456,262 @@ top: 0;
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
 		crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+/* 
+$(document).ready(function(){
+  cctv.loadCCTV();
+});
+ */
+var popCctv;
+function RotaCCTV2() {
+  this.cctvList = [];
+  this.layer;
+  this.minlevel = 6;
+  this.maxlevel = 8;
+  this.getCctv = function(c) {
+    var a = this.cctvList.length;
+    for(var b = 0; b < a; b++) {
+      if(this.cctvList[b].CCTVID == c){
+        return this.cctvList[b];
+      }
+    }
+    return null;
+  };
+  this.isLoad = function() {
+    if (this.cctvList.length == 0) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+  this.loadCCTV = function() {
+    var a = "./../cctv.htm";
+    a = "/map/mapcctv.do";
+    var b = this;
+    $.ajax({
+      url : a,
+      dataType : "json",
+      async : false,
+      success : function(c) {
+        try{
+          b.cctvList = c;
+        }catch(e){
+          
+        }
+      }
+    });
+  };
+  this.getCCTVTooltipInfo = function(b) {
+    var a = '<table border="0" cellspacing="0" cellpadding="0"><tr><td width="1" height="1"></td><td bgcolor="#1B4E99"></td><td width="1" height="1"></td></tr><tr><td bgcolor="#1B4E99"></td><td><table width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td bgcolor="#1B4E99"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td height="20"><table width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td style="padding:3px 3px 3px 3px;color:#ffffff;font-weight:bold;font-size:11px;">'
+        + b
+        + '</td></tr></table></td></tr></table></td></tr></table></td><td bgcolor="#1B4E99"></td></tr><tr><td width="1" height="1"></td><td bgcolor="#1B4E99"></td><td width="1" height="1"></td></tr></table>';
+    return a;
+  };
+  this.popupCctvImage = function(c) {
+    var b = this.getCctv(c);
+    if (b.LOCATE == null && b.MOVIE == "Y") {
+      this.popupCctvStream(c);
+      return;
+    }
+    var a = new StreamCctv(b);
+    var d = Mando.wgs84ToMandoMap(a.gDx, a.gDy);
+    cctvPopup.displayPopup(true, new UTISMap.LonLat(d.lon, d.lat), a.getImageHtml(), c);
+    weblog(c, "cctv");
+  };
+  this.popupCctvStream = function(cctvid, key){
+    if(popCctv) {
+      //popCctv.close();
+    }
+    
+    var streamCctv = new StreamCctv(cctvid, null, function(streamCctv){
+      var width = 355;
+      var height = 345;
+      var top = (window.screen.height - height) / 2;
+      var left = (window.screen.width - width) / 2;
+      if(cctvid.indexOf('E60') != -1 || cctvid.indexOf('E62') != -1){
+        streamCctv.gId = encodeURIComponent(streamCctv.gId);
+      }
+      popCctv = window.open('./../view/map/openDataCctvStream.jsp?key=' + key+ '&cctvid=' + cctvid+ '&cctvName=' + encodeURI(encodeURIComponent(streamCctv.gCctvName)) + '&kind=' + streamCctv.gKind + '&cctvip=' + streamCctv.gCctvIp + '&cctvch=' + streamCctv.gCh + '&id=' + streamCctv.gId + '&cctvpasswd=' + streamCctv.gPasswd + '&cctvport=' + streamCctv.gPort, 'PopupCctv',"top=" + top + "px, left=" + left + "px, width=" + width + "px, height=" + height+ "px, menubar=no, location=no, toolbar=no, scrollbars=no, status=no, resizable=no");
+      popCctv.focus();
+      weblog(cctvid, 'cctv');
+    });
+  };
+  this.popupCctvUgo = function(cctvid){
+    var width = 322;
+    var height = 239;
+    var top = (window.screen.height - height) / 2;
+    var left = (window.screen.width - width) / 2;
+    var features = 'width='+ width +',height='+ height +',top='+ top +',left='+ left +',toolbar=no,scrollbars=no,status=no,resizable=no,location=no';
+    window.open('/view/map/cctvUgo.jsp', 'UTIC도시교통정보센터', features);
+    weblog(cctvid, 'cctv');
+  };
+  this.popupLiveVideo = function(e, d) {
+    var b = this.getCctv(e);
+    var c = b.locate;
+    var a = getCctvSteamHTML(c, b.cctvname);
+    displayPopup(true, d, new UTISMap.Size(340, 298), new UTISMap.Size(0, -298 - IconType.IconCCTV.size.h), a);
+  };
+  this.getCctvFileName = function(b) {
+    var c = b;
+    if (c == undefined) {
+      return "";
+    }
+    var a = c.lastIndexOf("/");
+    if (a > -1) {
+      return c.substring(a + 1, c.length);
+    }
+    return "";
+  };
+  this.getRealtimeCctvPath = function(b, c) {
+    var e = networkCheck.getCctvPath();
+    var a = "./../map/mapcctvinfo.do?cctvid=" + b.cctvid;
+    var d = this;
+    $.getJSON(a, function(j) {
+      var k = null;
+      if (j.length == 1) {
+        k = j[0];
+      }
+      var h;
+      if (j.length == 0 || k == null || k.locate == undefined) {
+        h = "./../contents/images/map/cctv_no.gif";
+      } else {
+        var g = k.locate;
+        var i = d.getCctvFileName(g);
+        h = e + i;
+      }
+      var f = d.getCctvHTML(b, h, c);
+      cctvPopup.displayPopup(true, c, f);
+    });
+  };
+  this.playCCTV = function() {
+    if (!confirm("해당 컨텐츠는 지속적으로 인터넷 패킷을 사용합니다.\n\n 3G 망에서 시청시 과도한 요금이 부가될 수 있습니다.\n\n동영상을 재생하시겠습니까?")) {
+      return
+    }
+    document.getElementById("mov").play();
+  };
+  this.getCctvSteamHTML = function(c, e) {
+    var d = c.locate;
+    var b = '<video id="mov" width="500" height="224" src="' + d + '" onclick="playCCTV()"/>';
+    var a = '<div class="video shad cctv"><p>'
+        + c.cctvname
+        + "<span><a onclick=\"javascript:cctv.popupCctv2('"
+        + c.cctvid
+        + "',"
+        + e.lon
+        + ","
+        + e.lat
+        + ',\'stop\');" class="pdr"><img src="../../contents/images/map/btn_stop_video.gif" alt="정지영상보기" /></a><a href="javascript:cctvPopup.hidePopup(\''
+        + c.cctvid
+        + '\');"><img src="../../contents/images/map/btn_cctv_clse.gif" alt="닫기" /></a></span></p><div class="cctv_area player">'
+        + b + "</div></div>";
+    return a;
+  };
+  this.getCctvHTML = function(c, b, d) {
+    var a = '<div class="screenshop shad cctv" unselectable="on" style="-webkit-user-select: none;" ><p unselectable="on" style="-webkit-user-select: none;" >'
+        + c.cctvname
+        + "<span><a onclick=\"javascript:cctv.popupLiveVideo('"
+        + c.cctvid
+        + "',"
+        + d.lon
+        + ","
+        + d.lat
+        + ');" class="pdr"><img src="./../contents/images/map/btn_live_video.gif" alt="동영상보기" /></a><a onclick="javascript:cctvPopup.hidePopup(\''
+        + c.cctvid
+        + '\');"><img src="./../contents/images/map/btn_cctv_clse.gif" alt="닫기" /></a></span></p><div class="screenshot_area player"><img src="'
+        + b
+        + '" alt="" width="100%" height="100%" /></div></div>';
+    return a;
+  };
+  this.popupCctv2 = function(b, e, d, a) {
+    var c = Mando.wgs84ToMandoMap(e, d);
+    this.popupCctv(b, new UTISMap.LonLat(c.lon, c.lat), a);
+  };
+  this.popupCctv = function(d, e, c) {
+    var b = this.getCctv(d);
+    var f = null;
+    if (b.type == "02") {
+      f = true;
+    }
+    if (!c && f) {
+      var a = this.getCctvSteamHTML(b, e);
+      cctvPopup.displayPopup(true, e, a);
+    } else {
+      this.getRealtimeCctvPath(b, e);
+      return;
+    }
+  };
+  this.openCctvIPhone = function(a) {
+    var b = document.getElementById("mov");
+    b.src = a;
+  };
+}
+var cctv = new RotaCCTV2();
+var params = getUrlParams();
+var key = params.key;
+
+function getUrlParams() {
+    var params = {};
+    window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str, key, value) { params[key] = value; });
+    return params;
+} ;
+
+function test(cctvId){
+  cctv.popupCctvStream(cctvId, key, "cctvOpen");
+}
+/*---------------------------------  */
+  function StreamCctv(cctvid, mapType, callback){
+	  if(cctvid.CCTVID != null) {
+		    cctvid = cctvid.CCTVID ;
+		  }
+
+		  var cctvObj;
+		  
+		  $.ajax({
+		    url: 'http://www.utic.go.kr/map/getCctvInfoById.do?cctvId=' + cctvid,
+		    async: false,
+		    success: function(data) {
+		      cctvObj = JSON.parse(data);
+		    }
+		  });
+		  
+		  this.gWidth      = "320";
+		  this.gHeight     = "245";
+		  this.gCctvId     = cctvObj.CCTVID;
+		  this.gCctvName   = cctvObj.CCTVNAME;
+		  this.gCenterName = cctvObj.CENTERNAME;
+		  this.gDx         = cctvObj.XCOORD;
+		  this.gDy         = cctvObj.YCOORD;
+		  this.gLocate     = cctvObj.LOCATE;
+		  this.gCctvIp     = cctvObj.CCTVIP;
+		  this.gPort       = cctvObj.PORT;
+		  this.gCh         = cctvObj.CH;
+		  this.gId         = cctvObj.ID;
+		  this.gPasswd     = cctvObj.PASSWD;
+		  this.gMovie      = cctvObj.MOVIE;
+
+		  if(this.gCctvId.substring(0, 3) == 'L01'){
+		    this.gKind = 'Seoul';
+		  } else if(this.gCctvId.substring(0, 3) == 'L02'){
+		    this.gKind = 'N';
+		  } else if(this.gCctvId.substring(0, 3) == 'L03'){
+		    this.gKind = 'O';
+		  } else if(this.gCctvId.substring(0, 3) == 'L04'){
+		    this.gKind = 'P';
+		  } else if(this.gCctvId.substring(0, 3) == 'L08'){
+		    this.gKind = 'd';
+		  } else{
+		    this.gKind = cctvObj.KIND;
+		  }
+		 }
+		 var test123 = new StreamCctv('L933082',null,function(test123){
+			 console.log(test123);
+			 console.log(test123.gKind);
+		 
+		 });
+		/*  http://www.utic.go.kr/view/map/openDataCctvStream.jsp?key=qokfUPkT7O2DIrbm6j0JaWLWRfx1bjQYbEbegfHIhKCj8jdTPwhmvJ18JoxScyLYrJg7fbg5s7mGkXmqwcgg&cctvid=L010141&cctvName=%25EC%2584%259C%25EC%259A%25B8%25EC%2584%25B8%25EA%25B4%2580%25EC%2582%25AC%25EA%25B1%25B0%25EB%25A6%25AC&kind=Seoul&cctvip=null&cctvch=52&id=185&cctvpasswd=null&cctvport=null
+			 http://www.utic.go.kr/view/map/openDataCctvStream.jsp?key=qokfUPkT7O2DIrbm6j0JaWLWRfx1bjQYbEbegfHIhKCj8jdTPwhmvJ18JoxScyLYrJg7fbg5s7mGkXmqwcgg&cctvid=L010404&cctvName=%25EC%2584%25B1%25EC%258B%25A0%25EC%2597%25AC%25EB%258C%2580%25EC%259E%2585%25EA%25B5%25AC&kind=Seoul&cctvip=null&cctvch=52&id=137&cctvpasswd=null&cctvport=null
+				 http://www.utic.go.kr/view/map/openDataCctvStream.jsp?key=qokfUPkT7O2DIrbm6j0JaWLWRfx1bjQYbEbegfHIhKCj8jdTPwhmvJ18JoxScyLYrJg7fbg5s7mGkXmqwcgg&cctvid=L010156&cctvName=%25EC%2584%25B1%25EC%2588%2598%25EB%258C%2580%25EA%25B5%2590%25EB%2582%25A8%25EB%258B%25A8&kind=Seoul&cctvip=null&cctvch=52&id=182&cctvpasswd=null&cctvport=null */
+</script>
 </body>
 </html>

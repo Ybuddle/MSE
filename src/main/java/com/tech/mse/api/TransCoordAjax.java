@@ -78,6 +78,43 @@ public class TransCoordAjax {
 		String[] rWgs = {xAsString,yAsString} ;
 		return rWgs;
 	}
+	public String[] useProj4j2(String xWTMS,String yWTMS) {
+		CRSFactory crsFactory = new CRSFactory();
+		 // WGS84 CRS 생성
+		 CoordinateReferenceSystem WGS84 = crsFactory.createFromParameters("WGS84",
+		            "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+        CoordinateReferenceSystem WTM = crsFactory.createFromParameters("WTM",
+        		"+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs");
+		   // 좌표 변환
+        CoordinateTransformFactory ctFactory = new CoordinateTransformFactory();
+        CoordinateTransform Wgs84Towtm = ctFactory.createTransform(WGS84,WTM);
+       
+        // WGS84 좌표
+        double xWGS84 = Double.parseDouble(xWTMS);
+        double yWGS84 = Double.parseDouble(yWTMS);
+		// `result` is an output parameter to `transform()`
+		ProjCoordinate result = new ProjCoordinate();
+		
+		Wgs84Towtm.transform(new ProjCoordinate(xWGS84, yWGS84), result);
+		System.out.println("WGS84 좌표(" + xWGS84 + ", " + yWGS84 + ")는 WTM 좌표(" + result.x + ", " + result.y + ")로 변환됩니다.");
+		String xAsString = String.valueOf(result.x);
+		String yAsString = String.valueOf(result.y);
+		String[] rWgs = {xAsString,yAsString} ;
+		return rWgs;
+	}
+	public int getdistance(String xWGS84,String yWGS84,String targetxWGS84,String targetyWGS84) {
+		int distance = 0;
+        double dxWGS84 = Double.parseDouble(xWGS84);
+        double dyWGS84 = Double.parseDouble(yWGS84);
+        double dtargetxWGS84 = Double.parseDouble(targetxWGS84);
+        double dtargetyWGS84 = Double.parseDouble(targetyWGS84);
+		
+     // 두 점 간의 차이값 계산
+        double diffX = Math.abs(dxWGS84 - dtargetxWGS84);
+        double diffY = Math.abs(dyWGS84 - dtargetyWGS84);
+		
+		return distance;
+	}
 	public static StringBuilder getURLAcc(String start, String end) throws IOException {
 		//http://openapi.seoul.go.kr:8088/(인증키)/xml/AccInfo/1/5/
 		StringBuilder urlBuilder = new StringBuilder(accURLwithKeyXML);
