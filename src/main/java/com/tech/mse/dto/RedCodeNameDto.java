@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class RedCodeNameDto {
-	String REG_CD;
-	String REG_NAME;
+	private String REG_CD;
+	private String REG_NAME;
 }

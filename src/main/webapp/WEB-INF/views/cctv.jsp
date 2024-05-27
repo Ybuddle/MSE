@@ -10,7 +10,7 @@
 <script type="text/javascript"
 	src="resources/jquery/jquery-3.7.1.min.js"></script>
 
-<title>돌발상황</title>
+<title>cctv</title>
 <style>
 .mask {
 	position: fixed;
@@ -34,7 +34,7 @@
 #containerWrapper {
 	position: relative;
 	width: 450px;
-	height: 350px;
+/* 	height: 350px; */
 	padding: 15px 10px;
 }
 
@@ -44,7 +44,7 @@
 
 #poptable {
 	width: 450px;
-	height: 350px;
+/* 	height: 350px; */
 }
 #pop-head{
 	display: flex;
@@ -94,9 +94,9 @@ top: 0;
 
 			<div class="collapse navbar-collapse" id="navbarsExample07XL">
 				<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+					<li class="nav-item"><a class="nav-link" href="marker">돌발상황</a></li>
 					<li class="nav-item"><a class="nav-link active"
-						aria-current="page" href="marker">돌발상황</a></li>
-					<li class="nav-item"><a class="nav-link" href="cctv">CCTV</a></li>
+						aria-current="page" href="cctv">CCTV</a></li>
 				</ul>
 			</div>
 		</div>
@@ -138,8 +138,8 @@ top: 0;
         </colgroup>
 						<thead>
 							<tr>
-								<th scope="col">발생내용</th>
-								<th class="acc-time-td" scope="col">발생 및 완료예정일</th>
+								<th scope="col">CCTV이름</th>
+								<th class="acc-time-td" scope="col">CCTV 센터명</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -167,11 +167,11 @@ top: 0;
 		
 		
 	// promise이용한 ajax통신	
-		function getAccInfoAjax() {
+		function getCctvAllDataAjax() {
 		    return new Promise(function(resolve, reject) {
 		        $.ajax({
 		            method: "GET",
-		            url: "accInfoAjax",
+		            url: "cctvAllDataAjax",
 		            dataType: "json",
 		        })
 		        .done((data) => {
@@ -192,24 +192,6 @@ top: 0;
 		    });
 		};
 		
-  // 출력형식에 맞게 time형식 고치기
- function resolveDateTime(accdate, acctime){
-	var occr_date = accdate; // 예: '20240516'
-	var occr_time = acctime; // 예: '164700'
-	
-	//시작날짜와 시간을 나눠서 가져오기
-	var year = occr_date.substring(0, 4);
-	var month = occr_date.substring(4, 6);
-	var day = occr_date.substring(6, 8);
-	var hour = occr_time.substring(0, 2);
-	var minute = occr_time.substring(2, 4);
-	
-	var resolvedTime = year + '-' + month + '-' + day + ' ' + hour + ':'
-	+ minute;
-	
-	return resolvedTime;
- }
-  
 //kakao 지도 생성 시작
 	var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
 	mapOption = {
@@ -231,25 +213,24 @@ top: 0;
 	    // 이때 지도의 중심좌표와 레벨이 변경될 수 있습니다
 	    map.setBounds(bounds);
 	};
+	
+	//실행
+	getdata();
+	
  	async function getdata(){
-			let accDtoList = await getAccInfoAjax();
+			let accDtoList = await getCctvAllDataAjax();
 			//dto 마다 정제된 변수들 list
 			let positions = [];
 			//탭바에 총 갯수 추가
 			addTotalAccList(accDtoList);
 			
 			for(const [i,dto] of accDtoList.entries()){
-				let startTime = resolveDateTime(dto.occr_date,dto.occr_time);
-				let endTime = resolveDateTime(dto.exp_clr_date,dto.exp_clr_time);
 				positions.push({
-					title : dto.acc_info,
-					acc_type : dto.acc_type,
-					acc_dtype : dto.acc_dtype,
-					startTime : startTime,
-					endTime : endTime,
-					lat : dto.grs80tm_y,
-					lng : dto.grs80tm_x,
-					acc_road_code : dto.acc_road_code
+					title : dto.CCTVNAME,
+					CCTVID : dto.CCTVID,
+					CENTERNAME : dto.CENTERNAME,
+					lat : dto.YCOORD,
+					lng : dto.XCOORD
 				});
 				
 				//dto 마다 기본 marker생성
@@ -280,22 +261,14 @@ top: 0;
 			var newRowHTML = `
                     <td class="acc_info">\${data.title}</td>
                     <td class="add-time-td">
-                        <div>\${data.startTime}</div>
-                        <div>\${data.endTime}</div>
+                        <div>\${data.CENTERNAME}</div>
                     </td>
             `;
             // 새로운 행을 추가하고 tbody를 표시합니다.
             
             $(newtr).append(newRowHTML)
             $('#accList tbody').append(newtr);
-            
-            if(data.acc_road_code=="부분통제"){
-            	let roadCodeSpan = `<span class="badge bg-warning">\${data.acc_road_code}</span>`;
-            	$(newtr).find('.acc_info').append(roadCodeSpan)
-            }else{
-            	let roadCodeSpan = `<span class="badge bg-danger">\${data.acc_road_code}</span>`;
-            	$(newtr).find('.acc_info').append(roadCodeSpan)
-            }
+
             //tr 마다 클릭했을때 해당 marker 좌표로 이동
             $(newtr).click(function() {
             	map.panTo(marker.getPosition());
@@ -303,6 +276,7 @@ top: 0;
 		        
 		        overlay.setPosition(marker.getPosition());
 		        overlay.setMap(map,marker);
+		        popCCTV(marker)
             });
 		};
 		//accList 탭에 총 갯수 표시
@@ -322,26 +296,18 @@ top: 0;
 		                        <th scope="col" colspan="2" style="position: relative;">
 		                        	<div id="pop-head">		                            
 		                        		<button type="button" id="popclose" class="btn btn-outline-secondary btn-sm">Close</button>
-		                            <button type="button" id="popCctv" class="btn btn-outline-primary" value="\${data.lat},\${data.lng}">가까운CCTV</button>
 		                          </div>
 		                        </th>
 		                    </tr>
 		                </thead>
 		                <tbody class="table-group-divider">
 		                    <tr>
-		                        <th scope="row">기간</th>
-		                        <td>\${data.startTime} ~ \${data.endTime}</td>
+		                        <th scope="row">CCTV이름</th>
+		                        <td>\${data.title}</td>
 		                    </tr>
 		                    <tr>
-		                        <th scope="row">돌발유형</th>
-		                        <td>\${data.acc_type} (\${data.acc_dtype})</td>
-		                    </tr>
-		                    <tr>
-		                        <th scope="row">통제여부</th>
-		                        <td>\${data.acc_road_code}</td>
-		                    </tr>
-		                    <tr>
-		                        <td colspan="2">\${data.title}</td>
+		                        <th scope="row">CCTV센터</th>
+		                        <td>\${data.CENTERNAME}</td>
 		                    </tr>
 		                </tbody>
 		            </table>
@@ -353,47 +319,48 @@ top: 0;
 		    content.innerHTML = contentHTML;
 				
 		    kakao.maps.event.addListener(marker, 'click', function() {
+		    	map.panTo(marker.getPosition());
+		    	
 		        overlay.setContent(content);
 		        overlay.setPosition(new kakao.maps.LatLng(data.lat, data.lng));
 		        overlay.setMap(map,marker);
 		        console.log(overlay);
+		        popCCTV(marker)
 		    });
 
 		    console.log(content);
 		    
 		    return content;
 		};
-
+		//마커 이미지
+		var imageSrc = 'resources/cctvimg/cctv_03.png', // 마커이미지의 주소입니다    
+	    imageSize = new kakao.maps.Size(30, 33), // 마커이미지의 크기입니다
+	    imageOption = {offset: new kakao.maps.Point(27, 69)}; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+	      
+	// 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+	var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
 		// 지도에 마커를 표시하는 함수입니다    
 		function displayMarker(data) {
 			let latlng = new kakao.maps.LatLng(data.lat, data.lng);
 		    var marker = new kakao.maps.Marker({
 		        map: map,
 		        position: latlng,
-		        title: data.title // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+		        title: data.title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+		        image: markerImage
 		    });
 
 		    
 		    return marker;
 		};
-		//실행
-		getdata();
+
     
 		$(document).on("click","#popclose",function() {
 			overlay.setMap(null);
 		});
-		$(document).on("click","#popCctv",function() {
-			//alert($(this).val());
-			// 원본 문자열
-			var coordinates = $(this).val();
-
-			// 문자열을 쉼표로 분리
-			var parts = coordinates.split(",");
-
-			// 분리된 값을 변수에 대입
-			var latitude = parts[0];
-			var longitude = parts[1];
-			
+		function popCCTV(marker) {
+			var markerLatLng = marker.getPosition();
+			var latitude = markerLatLng.getLat();
+			var longitude =markerLatLng.getLng();
 			function getCctvData(latitude,longitude) {
 			    return new Promise(function(resolve, reject) {
 			        $.ajax({
@@ -423,10 +390,10 @@ top: 0;
                 var top = (window.screen.height - height) / 2;
                 var left = (window.screen.width - width) / 2;
                 var key = "qokfUPkT7O2DIrbm6j0JaWLWRfx1bjQYbEbegfHIhKCj8jdTPwhmvJ18JoxScyLYrJg7fbg5s7mGkXmqwcgg";
-                  console.log(streamCctv.gCctvId+" 스트르");
-                if(streamCctv.gCctvId.indexOf('E60') != -1 || streamCctv.gCctvId.indexOf('E62') != -1){
-                    streamCctv.gId = encodeURIComponent(streamCctv.gId);
-                  }
+                console.log(streamCctv.gCctvId+" 스트르");
+               if(streamCctv.gCctvId.indexOf('E60') != -1 || streamCctv.gCctvId.indexOf('E62') != -1){
+                  streamCctv.gId = encodeURIComponent(streamCctv.gId);
+                }
 
                 // 추가된 디버깅 로그
                 console.log("gCctvId: ", streamCctv.gCctvId);
@@ -446,7 +413,7 @@ top: 0;
             // 오류가 발생했을 때 처리
             console.error("오류:", error);
         });
-		});
+		};
 
 
 	</script>

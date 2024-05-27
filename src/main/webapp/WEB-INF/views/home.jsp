@@ -11,9 +11,7 @@
 <p><a href="marker">marker</a></p>
 <p><a href="marker2">marker2</a></p>
 <p><a href="marker3">marker3</a></p>
-<p><a href="codeInsert">codeInsert</a></p>
-<p><a href="codeInsertMain">codeInsertMain</a></p>
-<p><a href="codeInsertSub">codeInsertSub</a></p>
+<p><a href="cctvInsert">cctvInsert</a></p>
 <p><a href="useboot">useboot</a></p>
 </body>
 </html>

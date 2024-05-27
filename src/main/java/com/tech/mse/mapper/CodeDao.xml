@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- dao의 인터페이스 주소 -->
+<mapper namespace="com.tech.mse.dao.CodeDao">
+   <resultMap id="CctvDtoResultMap" type="com.tech.mse.dto.CctvDto">
+        <result property="CCTVID" column="CCTVID" />
+        <result property="CCTVNAME" column="CCTVNAME" />
+        <result property="CENTERNAME" column="CENTERNAME" />
+        <result property="XCOORD" column="XCOORD" jdbcType="VARCHAR" />
+        <result property="YCOORD" column="YCOORD" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+
+	<insert id="insertCctv" parameterType="java.util.List">
+       INSERT INTO DATA_CCTV(CCTVID,CCTVNAME,CENTERNAME,XCOORD,YCOORD)
+            <foreach collection="list" item="item" separator="UNION ALL">
+              SELECT #{item.CCTVID}, #{item.CCTVNAME}, #{item.CENTERNAME}, #{item.XCOORD}, #{item.YCOORD} FROM DUAL 
+            </foreach>
+    </insert>
+	<insert id="insertReg" parameterType="java.util.List">
+       INSERT INTO REG_CODE_NAME(REG_CD,REG_NAME)
+            <foreach collection="list" item="item" separator="UNION ALL">
+              SELECT #{item.REG_CD}, #{item.REG_NAME} FROM DUAL 
+            </foreach>
+    </insert>
+	<insert id="insertAccMain" parameterType="java.util.List">
+       INSERT INTO ACC_MAIN_NAME(ACC_TYPE,ACC_TYPE_NM)
+            <foreach collection="list" item="item" separator="UNION ALL">
+              SELECT #{item.acc_type}, #{item.acc_type_nm} FROM DUAL 
+            </foreach>
+    </insert>
+	<insert id="insertAccSub" parameterType="java.util.List">
+       INSERT INTO ACC_SUB_NAME(ACC_DTYPE,ACC_DTYPE_NM)
+            <foreach collection="list" item="item" separator="UNION ALL">
+              SELECT #{item.acc_dtype}, #{item.acc_dtype_nm} FROM DUAL 
+            </foreach>
+    </insert>
+    <select id="findCctv" parameterType="java.util.Map" resultMap="CctvDtoResultMap">
+	SELECT CCTVID ,
+	CCTVNAME ,
+	CENTERNAME ,
+	XCOORD ,
+	YCOORD FROM DATA_CCTV WHERE (XCOORD BETWEEN #{minX} AND #{maxX}) AND (YCOORD BETWEEN
+	#{minY} AND #{maxY})
+    </select>
+    <select id="findAllCctv" resultMap="CctvDtoResultMap">
+SELECT CCTVID ,
+CCTVNAME ,
+CENTERNAME ,
+XCOORD ,
+YCOORD  FROM DATA_CCTV WHERE CENTERNAME LIKE '%서울%' OR CCTVNAME LIKE '%서울%' ORDER BY CCTVID DESC
+    </select>
+    <select id="findAllCctvXY" parameterType="java.util.Map" resultMap="CctvDtoResultMap">
+SELECT CCTVID ,
+CCTVNAME ,
+CENTERNAME ,
+XCOORD ,
+YCOORD  FROM DATA_CCTV WHERE (XCOORD BETWEEN #{minX} AND #{maxX}) AND (YCOORD BETWEEN
+	#{minY} AND #{maxY}) AND CENTERNAME LIKE '%서울%' OR CCTVNAME LIKE '%서울%' ORDER BY CCTVID DESC
+    </select>
+</mapper>

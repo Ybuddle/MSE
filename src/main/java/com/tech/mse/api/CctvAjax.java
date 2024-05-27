@@ -28,13 +28,20 @@ import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.locationtech.proj4j.CoordinateTransform;
 import org.locationtech.proj4j.CoordinateTransformFactory;
 import org.locationtech.proj4j.ProjCoordinate;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.tech.mse.dto.AccInfoDto;
+import com.tech.mse.dto.CctvDto;
+import com.tech.mse.dto.CctvUticDto;
 import com.tech.mse.forenum.AccMainCodeE;
 import com.tech.mse.forenum.AccSubCodeE;
 
@@ -53,9 +60,18 @@ public class CctvAjax {
 	static String transURL = "https://dapi.kakao.com/v2/local/geo/transcoord";
 	static String restKey = "8044e14fa2240bb8b13af47f524ae9aa";
 	static String auth = "KakaoAK " + restKey;
-
+	public CctvAjax() {
+		// TODO Auto-generated constructor stub
+	}
+	public String accDTOListToJson(List<CctvDto> accDTOList) {
+	    // Gson 객체 생성
+	    Gson gson = new Gson();
+	    // List<accDTO>를 JSON 형식으로 직렬화하여 문자열로 변환
+	    String json = gson.toJson(accDTOList);
+	    return json;
+	}
 	// Haversine 공식을 사용하여 두 지점 사이의 거리를 계산하는 함수(km단위 + 기준은 wgs84의 지구 반지름)
-	public static double getDistanceInKilometerByHaversine(String wgs84x, String wgs84y, String cctvWgs84x,
+	public double getDistanceInKilometerByHaversine(String wgs84x, String wgs84y, String cctvWgs84x,
 			String cctvWgs84y) {
 		// X 좌표값, 경위도인 경우 longitude(경도) 세로경 -> 세로로 그러진 선을 기준으로 표시된 것 => x값
 		// 정확히는 그리니치 천문대를 기준으로 잘라 정반대편을 180도로 하여 각이 몇도인지표시(x)
@@ -122,9 +138,52 @@ public class CctvAjax {
 //			e.printStackTrace();
 //		}
 //	}
-	
+	public CctvUticDto getCctvUticDto(String cctvid) throws JsonParseException, JsonMappingException, IOException {
+
+		CctvUticDto cctvDto = null;
+		try {
+            // URL 생성
+            StringBuilder urlBuilder = getURLCctvObject(cctvid);
+
+            // URL에 연결
+            URL url = new URL(urlBuilder.toString());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-type", "application/json");
+
+            // 응답 코드 확인
+            int responseCode = conn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // 응답 데이터 읽기
+                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+                conn.disconnect();
+
+                // JSON 데이터 출력
+                System.out.println(response.toString());
+                // Gson 객체 생성       
+                Gson gson = new Gson();         
+                // Json 문자열 -> Student 객체        
+               cctvDto = gson.fromJson(response.toString(), CctvUticDto.class);
+                System.out.println("cctvUticDto : " + cctvDto.toString());
+        		System.out.println(cctvDto.getKIND() + " dfadsfasfas");
+            } else {
+                System.out.println("API 호출 실패: " + responseCode);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		return cctvDto;
+    }
+
 	public static void main(String[] args) {
-        String cctvid = "L933085";
+//        String cctvid = "L933085";
+        String cctvid = "L010194";
 
         try {
             // URL 생성
@@ -147,9 +206,16 @@ public class CctvAjax {
                     response.append(inputLine);
                 }
                 in.close();
+                conn.disconnect();
 
                 // JSON 데이터 출력
                 System.out.println(response.toString());
+                // Gson 객체 생성       
+                Gson gson = new Gson();         
+                // Json 문자열 -> Student 객체        
+                CctvUticDto cctvDto = gson.fromJson(response.toString(), CctvUticDto.class);
+                System.out.println("cctvUticDto : " + cctvDto.toString());
+        		System.out.println(cctvDto.getKIND() + " dfadsfasfas");
             } else {
                 System.out.println("API 호출 실패: " + responseCode);
             }
@@ -158,36 +224,7 @@ public class CctvAjax {
         }
     }
 
-//	public static void main(String[] args) {
-//		StringBuilder urlbuilder = null;
-//		TransCoordAjax tc = new TransCoordAjax();
-//		try {
-//			urlbuilder = getURLAcc("1","50");
-//			System.out.println("URL : "+ urlbuilder.toString());
-//			tc.useOnlyDocSeoul(urlbuilder);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (SAXException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (ParserConfigurationException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (TransformerException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-	// List<accDTO>를 JSON으로 직렬화하는 함수
-		public String accDTOListToJson(List<AccInfoDto> accDTOList) {
-		    // Gson 객체 생성
-		    Gson gson = new Gson();
-		    // List<accDTO>를 JSON 형식으로 직렬화하여 문자열로 변환
-		    String json = gson.toJson(accDTOList);
-		    return json;
-		}
-		
+
 		// WTM에서 wgs84 변환 메소드
 		public String[] useProj4j(String xWTMS,String yWTMS) {
 			CRSFactory crsFactory = new CRSFactory();
@@ -274,15 +311,15 @@ public class CctvAjax {
 			return urlBuilder;
 		}
 		//기준좌표와 특정거리 m 에 따른 max min X Y 좌표를 담는 Map을 반환하는 함수
-		public static Map<String, String> getMaxMinXYMap(String targetxWGS84,String targetyWGS84) {
-			double aroundDistance = 8000.0;
+		public Map<String, Double> getMaxMinXYMap(String targetxWGS84,String targetyWGS84) {
+			double aroundDistance = 4000.0;
 			
 //		    double radius = 6378.137; // 지구 반지름(WGS84 기준, 단위: km)
 			double radius = 6371; // 6371로 변경함 (구글맵과 동일) 지구 반지름(WGS84 기준, 단위: km)
 			double toRadian = Math.PI / 180; // 각도에 이것을 곱하면 라디안으로 변환 [각도 *toRadian]
 			
 			//반환될 map
-			Map<String, String> maxMinXYMap = new HashMap<String, String>();
+			Map<String, Double> maxMinXYMap = new HashMap<String, Double>();
 			
 			//현재 위도 좌표 (y좌표)
 			double nowLatitude = Double.parseDouble(targetyWGS84);
@@ -315,10 +352,15 @@ public class CctvAjax {
 			  System.out.println(rmaxX);
 			  System.out.println(rminX);
 			  
-			  maxMinXYMap.put("maxY", Double.toString(rmaxY));
-			  maxMinXYMap.put("minY", Double.toString(rminY));
-			  maxMinXYMap.put("maxX", Double.toString(rmaxX));
-			  maxMinXYMap.put("minX", Double.toString(rminX));
+//			  maxMinXYMap.put("maxY", Double.toString(rmaxY));
+//			  maxMinXYMap.put("minY", Double.toString(rminY));
+//			  maxMinXYMap.put("maxX", Double.toString(rmaxX));
+//			  maxMinXYMap.put("minX", Double.toString(rminX));
+			  
+			  maxMinXYMap.put("maxY", rmaxY);
+			  maxMinXYMap.put("minY", rminY);
+			  maxMinXYMap.put("maxX", rmaxX);
+			  maxMinXYMap.put("minX", rminX);
 			  
 			  
 			return maxMinXYMap;
