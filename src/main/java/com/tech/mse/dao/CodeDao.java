@@ -8,8 +8,9 @@ import com.tech.mse.dto.RedCodeNameDto;
 
 public interface CodeDao {
 	public List<CctvDto> findAllCctv();
+	public List<CctvDto> findAllCctvXY(Map<String, Double> minMaxXYMap);
 	public List<CctvDto> findCctv(Map<String, Double> minMaxXYMap);
-	public List<CctvDto> findAllCctv2(Map<String, Double> minMaxXYMap);
+	public List<CctvDto> findLocalCctvXY(Map<String, Double> minMaxXYMap);
 	public int insertCctv(List<CctvDto> slist);
 	public int insertReg(List<RedCodeNameDto> slist);
 	public int insertAccMain(List<Map<String,String>> slist);

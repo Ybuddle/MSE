@@ -117,12 +117,12 @@ top: 0;
 				class="nav-link active" data-bs-toggle="tab" href="#accContainer"
 				aria-selected="true" role="tab">사고 및 통제 <span class="badge bg-primary">0건</span>
 				</a></li>
-			<li class="nav-item" role="presentation"><a class="nav-link"
+<!-- 			<li class="nav-item" role="presentation"><a class="nav-link"
 				data-bs-toggle="tab" href="#profile" aria-selected="false"
 				tabindex="-1" role="tab">Profile</a></li>
 			<li class="nav-item" role="presentation"><a
 				class="nav-link disabled" href="#" aria-selected="false"
-				tabindex="-1" role="tab">Disabled</a></li>
+				tabindex="-1" role="tab">Disabled</a></li> -->
 		</ul>
 
 		<div id="myTabContent" class="tab-content">
@@ -151,8 +151,8 @@ top: 0;
 						</tbody>
 					</table>
 				</div>
-				<!--첫번째탭accContainer 끝-->
 			</div>
+				<!--첫번째탭accContainer 끝-->
 
 		</div>
 	</div>
@@ -262,7 +262,7 @@ top: 0;
 				//리스트 생성(marker,인포 윈도우 컨텐츠)+클릭이벤트
 				addAccList(positions[i],marker,content);
 			}
-			console.log(positions);
+			//console.log(positions);
 		    //영역 재설정
 		    setBounds();
 		};
@@ -356,7 +356,7 @@ top: 0;
 		        overlay.setContent(content);
 		        overlay.setPosition(new kakao.maps.LatLng(data.lat, data.lng));
 		        overlay.setMap(map,marker);
-		        console.log(overlay);
+		       // console.log(overlay);
 		    });
 
 		    console.log(content);
@@ -439,7 +439,12 @@ top: 0;
                 console.log("gPort: ", streamCctv.gPort);
                 var pathUrl = 'http://www.utic.go.kr/view/map/openDataCctvStream.jsp?key=' + key+ '&cctvid=' + streamCctv.gCctvId + '&cctvName=' + encodeURI(encodeURIComponent(streamCctv.gCctvName)) + '&kind=' + streamCctv.gKind + '&cctvip=' + streamCctv.gCctvIp + '&cctvch=' + streamCctv.gCh + '&id=' + streamCctv.gId + '&cctvpasswd=' + streamCctv.gPasswd + '&cctvport=' + streamCctv.gPort;
            console.log(pathUrl);
-                window.open('http://www.utic.go.kr/view/map/openDataCctvStream.jsp?key=' + key+ '&cctvid=' + streamCctv.gCctvId+ '&cctvName=' + encodeURI(encodeURIComponent(streamCctv.gCctvName)) + '&kind=' + streamCctv.gKind + '&cctvip=' + streamCctv.gCctvIp + '&cctvch=' + streamCctv.gCh + '&id=' + streamCctv.gId + '&cctvpasswd=' + streamCctv.gPasswd + '&cctvport=' + streamCctv.gPort, 'PopupCctv',"top=" + top + "px, left=" + left + "px, width=" + width + "px, height=" + height+ "px, menubar=no, location=no, toolbar=no, scrollbars=no, status=no, resizable=no");
+                window.open('http://www.utic.go.kr/view/map/openDataCctvStream.jsp?key=' + key+ 
+                		'&cctvid=' + streamCctv.gCctvId+ '&cctvName=' + encodeURI(encodeURIComponent(streamCctv.gCctvName)) 
+                		+ '&kind=' + streamCctv.gKind + '&cctvip=' + streamCctv.gCctvIp + '&cctvch=' + streamCctv.gCh 
+                		+ '&id=' + streamCctv.gId + '&cctvpasswd=' + streamCctv.gPasswd + '&cctvport=' + streamCctv.gPort, 
+                		'PopupCctv',"top=" + top + "px, left=" + left + "px, width=" + width + "px, height=" 
+                		+ height+ "px, menubar=no, location=no, toolbar=no, scrollbars=no, status=no, resizable=no");
 
               });
         }).catch((error) => {
@@ -465,20 +470,6 @@ function getValueOrNull(value) {
 			  var cctvObj;
 			      cctvObj = data.CCTVUTICDTO;
 			  
-/* 			  this.gWidth      = "320";
-			  this.gHeight     = "245";
-			  this.gCctvId     = cctvObj.CCTVID;
-			  this.gCctvName   = cctvObj.CCTVNAME;
-			  this.gCenterName = cctvObj.CENTERNAME;
-			  this.gDx         = cctvObj.XCOORD;
-			  this.gDy         = cctvObj.YCOORD;
-			  this.gLocate     = cctvObj.LOCATE;
-			  this.gCctvIp     = cctvObj.CCTVIP;
-			  this.gPort       = cctvObj.PORT;
-			  this.gCh         = cctvObj.CH;
-			  this.gId         = cctvObj.ID;
-			  this.gPasswd     = cctvObj.PASSWD;
-			  this.gMovie      = cctvObj.MOVIE; */
 			    this.gWidth = "320";
 			    this.gHeight = "245";
 			    this.gCctvId = getValueOrNull(cctvObj.CCTVID);

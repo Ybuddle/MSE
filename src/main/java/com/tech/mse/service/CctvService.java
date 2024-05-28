@@ -29,7 +29,10 @@ public class CctvService {
 		Map<String, Double> minMaxXYMap = null;
 		try {
 			minMaxXYMap = cctvajax.getMaxMinXYMap(lng, lat);
-			System.out.println(minMaxXYMap.get("maxY"));
+			System.out.println("maxY :"+minMaxXYMap.get("maxY"));
+			System.out.println("maxX :"+minMaxXYMap.get("maxX"));
+			System.out.println("minY :"+minMaxXYMap.get("minY"));
+			System.out.println("minX :"+minMaxXYMap.get("minX"));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -41,29 +44,29 @@ public class CctvService {
 		cctvDtoList = codeDao.findCctv(minMaxXYMap);
 		System.out.println("검색된 cctvlist 길이 : " + cctvDtoList.size());
 		
-
-        // 현재 위치와 CCTV 위치 간의 거리를 계산하여 리스트에 저장
-        for (CctvDto cctvDto : cctvDtoList) {
-            double distance = cctvajax.getDistanceInKilometerByHaversine(lat, lng, cctvDto.getYCOORD(), cctvDto.getXCOORD());
-            cctvDto.setDistance(distance);
-        }
-
-        // 거리를 기준으로 오름차순으로 정렬
-        Collections.sort(cctvDtoList, Comparator.comparingDouble(CctvDto::getDistance));
-
-        // 가장 가까운 3개의 CCTV를 선택
-        List<CctvDto> closestCctvs = cctvDtoList.subList(0, Math.min(cctvDtoList.size(), 3));
-
-        // 가장 가까운 3개의 CCTV 출력
-        for (CctvDto cctvDto : closestCctvs) {
-            System.out.println("CCTV ID: " + cctvDto.getCCTVID());
-            System.out.println("CCTV Name: " + cctvDto.getCCTVNAME());
-            System.out.println("CCTV Center Name: " + cctvDto.getCENTERNAME());
-            System.out.println("CCTV Latitude: " + cctvDto.getYCOORD());
-            System.out.println("CCTV Longitude: " + cctvDto.getXCOORD());
-            System.out.println("Distance from current location: " + cctvDto.getDistance() + " km");
-            
-            CctvUticDto cctvUticDto = null;
+		
+		// 현재 위치와 CCTV 위치 간의 거리를 계산하여 리스트에 저장
+		for (CctvDto cctvDto : cctvDtoList) {
+			double distance = cctvajax.getDistanceInKilometerByHaversine(lat, lng, cctvDto.getYCOORD(), cctvDto.getXCOORD());
+			cctvDto.setDistance(distance);
+		}
+		
+		// 거리를 기준으로 오름차순으로 정렬
+		Collections.sort(cctvDtoList, Comparator.comparingDouble(CctvDto::getDistance));
+		
+		// 가장 가까운 3개의 CCTV를 선택
+		List<CctvDto> closestCctvs = cctvDtoList.subList(0, Math.min(cctvDtoList.size(), 3));
+		
+		// 가장 가까운 3개의 CCTV 출력
+		for (CctvDto cctvDto : closestCctvs) {
+			System.out.println("CCTV ID: " + cctvDto.getCCTVID());
+			System.out.println("CCTV Name: " + cctvDto.getCCTVNAME());
+			System.out.println("CCTV Center Name: " + cctvDto.getCENTERNAME());
+			System.out.println("CCTV Latitude: " + cctvDto.getYCOORD());
+			System.out.println("CCTV Longitude: " + cctvDto.getXCOORD());
+			System.out.println("Distance from current location: " + cctvDto.getDistance() + " km");
+			
+			CctvUticDto cctvUticDto = null;
 			try {
 				cctvUticDto = cctvajax.getCctvUticDto(cctvDto.getCCTVID());
 				System.out.println("cctvUticDto전달 : " + cctvUticDto.toString());
@@ -71,12 +74,45 @@ public class CctvService {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-            cctvDto.setCCTVUTICDTO(cctvUticDto);
-            
-        }
+			cctvDto.setCCTVUTICDTO(cctvUticDto);
+			
+		}
 		
 		String jasonClosestCctvs = cctvajax.accDTOListToJson(closestCctvs);
-        
+		
+		
+		return jasonClosestCctvs;
+	}
+	public String createCCtvObject2(Model model) {
+		Map<String, Object> modelMap = model.asMap();
+		String maxY = (String) modelMap.get("maxY");
+		String minY = (String) modelMap.get("minY");
+		String maxX = (String) modelMap.get("maxX");
+		String minX = (String) modelMap.get("minX");
+		SqlSession sqlSession = (SqlSession) modelMap.get("sqlSession");
+		System.out.println(maxY +":"+ minY );
+		System.out.println(maxX +":"+ minX );
+		
+		//minmaxXY 갖는 map
+		Map<String, Double> minMaxXYMap = null;
+		try {
+			minMaxXYMap = cctvajax.transMap(maxY, minY,maxX,minX);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("maxY22 :"+minMaxXYMap.get("maxY"));
+		System.out.println("maxX22 :"+minMaxXYMap.get("maxX"));
+		System.out.println("minY22:"+minMaxXYMap.get("minY"));
+		System.out.println("minX22:"+minMaxXYMap.get("minX"));
+		//minmaxXY로 해당 범위 cctv 리스트가져오기
+		List<CctvDto> cctvDtoList = null;
+		CodeDao codeDao = sqlSession.getMapper(CodeDao.class);
+		cctvDtoList = codeDao.findAllCctvXY(minMaxXYMap);
+//		cctvDtoList = codeDao.findLocalCctvXY(minMaxXYMap);
+		System.out.println("검색된 cctvlist 길이 : " + cctvDtoList.size());
+		
+		String jasonClosestCctvs = cctvajax.accDTOListToJson(cctvDtoList);
 		
 		return jasonClosestCctvs;
 	}

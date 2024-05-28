@@ -310,6 +310,19 @@ public class CctvAjax {
 			
 			return urlBuilder;
 		}
+		//String 값들은 double로 바꾸어 map으로 생성하는 함수
+		public Map<String, Double> transMap(String maxY, String minY, String maxX, String minX) {
+			Map<String, Double> map = new HashMap<String, Double>();
+			Double rmaxY = Double.parseDouble(maxY);
+			Double rminY = Double.parseDouble(minY);
+			Double rmaxX = Double.parseDouble(maxX);
+			Double rminX = Double.parseDouble(minX);
+			map.put("maxY", rmaxY);
+			map.put("minY", rminY);
+			map.put("maxX", rmaxX);
+			map.put("minX", rminX);
+			return map;
+		}
 		//기준좌표와 특정거리 m 에 따른 max min X Y 좌표를 담는 Map을 반환하는 함수
 		public Map<String, Double> getMaxMinXYMap(String targetxWGS84,String targetyWGS84) {
 			double aroundDistance = 4000.0;

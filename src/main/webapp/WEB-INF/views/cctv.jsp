@@ -110,19 +110,27 @@ top: 0;
 
 		<!--kakaomap  -->
 		<div id="map" style="width: 100%; height: 37.5rem;"></div>
-
+		
+		
+		
+		<!-- testDIV -->
+		<div id="testdiv" style="margin-top:10px;margin-bottom: 10px;">
+		</div>
+		
+		
+		
 		<!--탭바  -->
 		<ul class="nav nav-tabs" role="tablist">
 			<li class="nav-item" role="presentation"><a
 				class="nav-link active" data-bs-toggle="tab" href="#accContainer"
-				aria-selected="true" role="tab">사고 및 통제 <span class="badge bg-primary">0건</span>
+				aria-selected="true" role="tab">CCTV 목록 <span class="badge bg-primary">0건</span>
 				</a></li>
-			<li class="nav-item" role="presentation"><a class="nav-link"
+<!-- 			<li class="nav-item" role="presentation"><a class="nav-link"
 				data-bs-toggle="tab" href="#profile" aria-selected="false"
 				tabindex="-1" role="tab">Profile</a></li>
 			<li class="nav-item" role="presentation"><a
 				class="nav-link disabled" href="#" aria-selected="false"
-				tabindex="-1" role="tab">Disabled</a></li>
+				tabindex="-1" role="tab">Disabled</a></li> -->
 		</ul>
 
 		<div id="myTabContent" class="tab-content">
@@ -151,8 +159,8 @@ top: 0;
 						</tbody>
 					</table>
 				</div>
-				<!--첫번째탭accContainer 끝-->
 			</div>
+				<!--첫번째탭accContainer 끝-->
 
 		</div>
 	</div>
@@ -165,7 +173,7 @@ top: 0;
 		const html = document.querySelector('html');
 		html.style.overflow = 'hidden'; // 로딩 중 스크롤 방지
 		
-		
+		var markers = [];
 	// promise이용한 ajax통신	
 		function getCctvAllDataAjax() {
 		    return new Promise(function(resolve, reject) {
@@ -191,7 +199,25 @@ top: 0;
 		        });
 		    });
 		};
-		
+		//ajax 영역변경시 가져올 데이터
+		function getBoundsCctvDataAjax(minMaxXY){
+	        $.ajax({
+	            method: "GET",
+	            url: "BoundsCctvDataAjax",
+	            data : minMaxXY, // jQuery가 자동으로 쿼리 문자열로 변환합니다.
+	            dataType: "json",
+	        })
+	        .done((data) => {
+	            console.log("데이터가 있나요? : " + data);
+	          removeTr();
+	        	removeMarkers();
+	        	reGetData(data);
+	        	
+	        })
+	        .fail((error) => {
+	            console.error("AJAX 요청 실패:", error);
+	        })
+		}
 //kakao 지도 생성 시작
 	var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
 	mapOption = {
@@ -214,9 +240,94 @@ top: 0;
 	    map.setBounds(bounds);
 	};
 	
-	//실행
+	//맵 영역변경 이벤트리스너
+	kakao.maps.event.addListener(map, 'bounds_changed', function() {             
+    
+    // 지도 영역정보를 얻어옵니다 
+    var bounds = map.getBounds();
+    // 지도의 현재 레벨을 얻어옵니다
+    var level = map.getLevel();
+    // 영역정보의 남서쪽 정보를 얻어옵니다 .getLng()과 .getLat으로 각각 좌표 얻을수있음
+    var swLatlng = bounds.getSouthWest();
+    
+    // 영역정보의 북동쪽 정보를 얻어옵니다 
+    var neLatlng = bounds.getNorthEast();
+    
+    var minMaxXY = {
+    		minX : swLatlng.getLng(),
+    		minY : swLatlng.getLat(),
+    		maxX : neLatlng.getLng(),
+    		maxY : neLatlng.getLat()
+    	};
+    console.log(minMaxXY.minX);
+    console.log(minMaxXY.minY);
+    console.log(minMaxXY.maxX);
+    console.log(minMaxXY.maxY);
+   /*  var message = '<p>영역좌표는 남서쪽 위도, 경도는  ' + swLatlng.toString() + '이고 <br>'; 
+    message += '북동쪽 위도, 경도는  ' + neLatlng.toString() + '입니다 </p>'+'<p> 확대 레벨은'+level+'입니다</p>'; 
+    
+    var resultDiv = document.getElementById('testdiv');
+    resultDiv.innerHTML = message;
+    var ppp = document.createElement('p'); */
+    
+    if(level<=8){
+    	/* ppp.innerHTML = '8이하'; */
+    	/* resultDiv.appendChild(ppp); */
+    	getBoundsCctvDataAjax(minMaxXY);
+    	//tr.remove();
+    	//removeMarkers();
+    }
+	});
+	
+	
+	
+	//------실행
 	getdata();
 	
+	//
+	function removeMarkers(){
+		if(markers.length>0){
+		for(var i=0; i<markers.length; i++){
+			markers[i].setMap(null);
+		}
+		markers = [];
+	 }
+	}
+	//
+	function removeTr(){
+		 var trselect = $('#accList tbody > tr');
+		 trselect.remove();
+	}
+	//
+	function reGetData(data){
+		let accDtoList = data;
+		//dto 마다 정제된 변수들 list
+		let positions = [];
+		//탭바에 총 갯수 추가
+		addTotalAccList(accDtoList);
+		
+		for(const [i,dto] of accDtoList.entries()){
+			positions.push({
+				title : dto.CCTVNAME,
+				CCTVID : dto.CCTVID,
+				CENTERNAME : dto.CENTERNAME,
+				lat : dto.YCOORD,
+				lng : dto.XCOORD
+			});
+			
+			//dto 마다 기본 marker생성
+			var marker = displayMarker(positions[i]);
+			//해당 marker의 오버레이와 오버레이 띄우는 클릭이벤트
+			var content = getMakerOverlayContents(marker,positions[i]);
+			
+			//리스트 생성(marker,인포 윈도우 컨텐츠)+클릭이벤트
+			addAccList(positions[i],marker,content);
+		}
+		//console.log(positions);
+
+	}
+	
+	//
  	async function getdata(){
 			let accDtoList = await getCctvAllDataAjax();
 			//dto 마다 정제된 변수들 list
@@ -254,6 +365,35 @@ top: 0;
 			yAnchor : 0.5,
 			zIndex : 3
 		});
+		
+		
+		//마커 이미지
+		var imageSrc = 'resources/cctvimg/cctv_03.png', // 마커이미지의 주소입니다    
+	    imageSize = new kakao.maps.Size(30, 33), // 마커이미지의 크기입니다
+	    imageOption = {offset: new kakao.maps.Point(27, 69)}; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+	      
+		// 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+		var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+		//마커를 담는 배열
+
+	 // 지도에 마커를 표시하는 함수입니다    
+		function displayMarker(data) {
+			let latlng = new kakao.maps.LatLng(data.lat, data.lng);
+		    var marker = new kakao.maps.Marker({
+		        map: map,
+		        position: latlng,
+		        title: data.title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+		        image: markerImage
+		    });
+	
+		    markers.push(marker);
+		    
+		    return marker;
+		};
+
+    
+		
+		
 		
 		//accList에 내용을 append 하는 함수
 		function addAccList(data,marker,content){
@@ -328,32 +468,11 @@ top: 0;
 		        popCCTV(marker)
 		    });
 
-		    console.log(content);
+		    //console.log(content);
 		    
 		    return content;
 		};
-		//마커 이미지
-		var imageSrc = 'resources/cctvimg/cctv_03.png', // 마커이미지의 주소입니다    
-	    imageSize = new kakao.maps.Size(30, 33), // 마커이미지의 크기입니다
-	    imageOption = {offset: new kakao.maps.Point(27, 69)}; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
-	      
-	// 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
-	var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
-		// 지도에 마커를 표시하는 함수입니다    
-		function displayMarker(data) {
-			let latlng = new kakao.maps.LatLng(data.lat, data.lng);
-		    var marker = new kakao.maps.Marker({
-		        map: map,
-		        position: latlng,
-		        title: data.title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
-		        image: markerImage
-		    });
-
-		    
-		    return marker;
-		};
-
-    
+	
 		$(document).on("click","#popclose",function() {
 			overlay.setMap(null);
 		});
@@ -432,20 +551,6 @@ function getValueOrNull(value) {
 			  var cctvObj;
 			      cctvObj = data.CCTVUTICDTO;
 			  
-/* 			  this.gWidth      = "320";
-			  this.gHeight     = "245";
-			  this.gCctvId     = cctvObj.CCTVID;
-			  this.gCctvName   = cctvObj.CCTVNAME;
-			  this.gCenterName = cctvObj.CENTERNAME;
-			  this.gDx         = cctvObj.XCOORD;
-			  this.gDy         = cctvObj.YCOORD;
-			  this.gLocate     = cctvObj.LOCATE;
-			  this.gCctvIp     = cctvObj.CCTVIP;
-			  this.gPort       = cctvObj.PORT;
-			  this.gCh         = cctvObj.CH;
-			  this.gId         = cctvObj.ID;
-			  this.gPasswd     = cctvObj.PASSWD;
-			  this.gMovie      = cctvObj.MOVIE; */
 			    this.gWidth = "320";
 			    this.gHeight = "245";
 			    this.gCctvId = getValueOrNull(cctvObj.CCTVID);

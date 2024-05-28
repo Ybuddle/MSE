@@ -60,6 +60,13 @@ CCTVNAME ,
 CENTERNAME ,
 XCOORD ,
 YCOORD  FROM DATA_CCTV WHERE (XCOORD BETWEEN #{minX} AND #{maxX}) AND (YCOORD BETWEEN
-	#{minY} AND #{maxY}) AND CENTERNAME LIKE '%서울%' OR CCTVNAME LIKE '%서울%' ORDER BY CCTVID DESC
+	#{minY} AND #{maxY}) AND (CENTERNAME LIKE '%서울%' OR CCTVNAME LIKE '%서울%') ORDER BY CCTVID DESC
+    </select>
+    <select id="findLocalCctvXY" parameterType="java.util.Map" resultMap="CctvDtoResultMap">
+SELECT CCTVID ,
+CCTVNAME ,
+CENTERNAME ,
+XCOORD ,
+YCOORD  FROM DATA_CCTV WHERE CENTERNAME LIKE '%국가교통%' ORDER BY CCTVID DESC
     </select>
 </mapper>

@@ -97,6 +97,22 @@ public class HomeController {
 		
 		return accDtoListJSON;
 	}
+	@RequestMapping(value = "/BoundsCctvDataAjax", method = RequestMethod.GET, produces = "application/json; charset=UTF-8")
+	@ResponseBody
+	public String BoundsCctvDataAjax(Model model,@RequestParam String minX, @RequestParam String minY,@RequestParam String maxX, @RequestParam String maxY) {
+		System.out.println(minX+" : " + maxX);
+		System.out.println(minY+" : " + maxY);
+		model.addAttribute("minX", minX);
+		model.addAttribute("maxX", maxX);
+		model.addAttribute("minY", minY);
+		model.addAttribute("maxY", maxY);
+		model.addAttribute("sqlSession", sqlSession);
+		
+		CctvService cctvService = new CctvService();
+		String jasonClosestCctv = cctvService.createCCtvObject2(model);
+		
+		return jasonClosestCctv;
+	}
 	@RequestMapping(value = "/cctvDataAjax", method = RequestMethod.GET, produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public String cctvDataAjax(Model model,@RequestParam String lat, @RequestParam String lng) {
